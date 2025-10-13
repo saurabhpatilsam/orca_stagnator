@@ -1,3 +1,4 @@
+// Dual Supabase Support - Updated 2025-10-13
 import React, { useState } from 'react';
 import { Upload, Database, CheckCircle, XCircle, Loader, AlertCircle } from 'lucide-react';
 import './App.css';
@@ -37,8 +38,8 @@ function App() {
   };
 
   const handleUpload = async () => {
-    if (!file && !filePath) {
-      setError('Please select a file or enter a file path');
+    if (!file) {
+      setError('Please select a file');
       return;
     }
 
