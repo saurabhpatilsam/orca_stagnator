@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Automated Trading Strategy Daemon
+  trading-daemon:
+    build:
+      context: .
+      dockerfile: Dockerfile.trading
+    container_name: trading-daemon
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - TZ=America/New_York
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - trading-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Order Listener Service
+  order-listener:
+    build:
+      context: .
+      dockerfile: Dockerfile.trading
+    container_name: order-listener
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - TZ=America/New_York
+      - PYTHONUNBUFFERED=1
+    command: ["python3", "supabase_order_listener.py"]
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - trading-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  trading-network:
+    driver: bridge
+
+volumes:
+  logs:

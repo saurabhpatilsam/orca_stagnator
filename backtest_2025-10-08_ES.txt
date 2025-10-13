@@ -1,0 +1,34 @@
+======================================================================
+BACKTEST RESULTS
+======================================================================
+Date: 2025-10-08
+Instrument: ESZ5
+First Hour High: 6774.25
+First Hour Low: 6772.50
+
+Performance Metrics:
+  Total Orders: 10
+  Filled Orders: 3
+  Winning Trades: 2
+  Losing Trades: 1
+  Win Rate: 66.67%
+  Total P&L: $5.00
+  Average Win: $5.00
+  Average Loss: $-5.00
+
+Trade Details:
+
+  Order #1 (short):
+    Entry: 6783.25
+    Exit: 6788.25
+    P&L: $-5.00
+
+  Order #2 (short):
+    Entry: 6792.25
+    Exit: 6787.25
+    P&L: $5.00
+
+  Order #3 (short):
+    Entry: 6801.25
+    Exit: 6796.25
+    P&L: $5.00

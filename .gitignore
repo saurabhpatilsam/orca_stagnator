@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+*.log
+*.pyc
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+dist/
+build/
+frontend/dist/
+frontend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Temp files
+*.tmp
+temp/
+tmp/
+
+# Sensitive
+.env.local
+.env.production
+*.pem
+*.key
+
+# Backup
+*_with_duplicates
+*.backup
+
+# Sensitive files with API keys
+mcp_config_fixed.json
+get_trading_token_final.py
+test_redis_connection.py
+test_tradovate_direct.py
+test_tradovate_order.py
+app/services/orca_redis/client.py
+# MCP config files with secrets
+mcp_config*.json
