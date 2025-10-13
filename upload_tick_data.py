@@ -377,7 +377,8 @@ class TickDataUploader:
         csv_file: str,
         instrument: str,
         skip_duplicates: bool = True,
-        has_header: bool = True
+        has_header: bool = True,
+        progress_callback = None
     ) -> Dict:
         """
         Upload TXT file to Supabase.
@@ -387,6 +388,7 @@ class TickDataUploader:
             instrument: Instrument code ('ES' or 'NQ')
             skip_duplicates: Whether to skip duplicate rows
             has_header: Whether file has header row
+            progress_callback: Optional callback function for batch progress updates
         
         Returns:
             Dict with upload statistics
@@ -493,6 +495,17 @@ class TickDataUploader:
                     uploaded_rows += inserted_count
                     
                     logger.info(f"  ✅ Batch {chunk_num}: Uploaded {inserted_count} rows (Total: {uploaded_rows:,}/{total_rows:,})")
+                    
+                    # Send progress update if callback provided
+                    if progress_callback:
+                        progress_callback({
+                            'batch': chunk_num,
+                            'batch_rows': inserted_count,
+                            'total_uploaded': uploaded_rows,
+                            'total_processed': total_rows,
+                            'skipped': skipped_rows,
+                            'status': 'uploading'
+                        })
                     
                 except Exception as e:
                     # Log error and continue

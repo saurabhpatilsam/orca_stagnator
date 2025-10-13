@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Database, Server, CheckCircle, XCircle, Loader2, FileText, Clock, TrendingUp } from 'lucide-react';
+import { Upload, Database, Server, CheckCircle, XCircle, Loader2, FileText, Clock, TrendingUp, Activity } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -9,7 +9,7 @@ function App() {
   const [skipDuplicates, setSkipDuplicates] = useState(false);
   const [supabaseTarget, setSupabaseTarget] = useState('selfhosted');
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(null);
+  const [batchProgress, setBatchProgress] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
@@ -45,7 +45,7 @@ function App() {
     setUploading(true);
     setError(null);
     setResult(null);
-    setProgress({ current: 0, total: 100, message: 'Preparing upload...' });
+    setBatchProgress(null);
 
     try {
       const formData = new FormData();
@@ -55,45 +55,53 @@ function App() {
       formData.append('skip_duplicates', skipDuplicates);
       formData.append('supabase_target', supabaseTarget);
 
-      const xhr = new XMLHttpRequest();
+      // Use EventSource for Server-Sent Events
+      const response = await fetch('/api/upload-tick-data', {
+        method: 'POST',
+        body: formData,
+      });
 
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          setProgress({
-            current: percentComplete,
-            total: 100,
-            message: `Uploading... ${percentComplete}%`
-          });
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.substring(6));
+            
+            if (data.status === 'uploading') {
+              // Update batch progress
+              setBatchProgress({
+                batch: data.batch,
+                batchRows: data.batch_rows,
+                totalUploaded: data.total_uploaded,
+                totalProcessed: data.total_processed,
+                skipped: data.skipped
+              });
+            } else if (data.status === 'completed') {
+              // Upload completed successfully
+              setResult(data);
+              setBatchProgress(null);
+              setUploading(false);
+            } else if (data.error || data.status === 'error') {
+              // Error occurred
+              setError(data.error || 'Upload failed');
+              setBatchProgress(null);
+              setUploading(false);
+            }
+          }
         }
-      });
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          setResult(response);
-          setProgress(null);
-        } else {
-          const errorData = JSON.parse(xhr.responseText);
-          setError(errorData.detail || 'Upload failed');
-          setProgress(null);
-        }
-        setUploading(false);
-      });
-
-      xhr.addEventListener('error', () => {
-        setError('Network error occurred');
-        setProgress(null);
-        setUploading(false);
-      });
-
-      xhr.open('POST', '/api/upload-tick-data');
-      xhr.timeout = 900000;
-      xhr.send(formData);
+      }
 
     } catch (err) {
       setError(err.message || 'Upload failed');
-      setProgress(null);
+      setBatchProgress(null);
       setUploading(false);
     }
   };
@@ -275,21 +283,34 @@ function App() {
           {/* Right Column - Status & Info */}
           <div className="space-y-6">
             
-            {/* Progress */}
-            {progress && (
+            {/* Batch Progress */}
+            {batchProgress && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Upload Progress</h3>
+                <div className="flex items-center space-x-2 mb-4">
+                  <Activity className="w-5 h-5 text-black animate-pulse" />
+                  <h3 className="font-semibold text-gray-900">Uploading Batches</h3>
+                </div>
                 <div className="space-y-4">
-                  <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                    <div
-                      className="bg-black h-full transition-all duration-300 rounded-full"
-                      style={{ width: `${progress.current}%` }}
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Batch #{batchProgress.batch}</div>
+                      <div className="text-xl font-bold text-black">
+                        {batchProgress.batchRows?.toLocaleString()} rows
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total</div>
+                      <div className="text-xl font-bold text-green-600">
+                        {batchProgress.totalUploaded?.toLocaleString()}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">{progress.message}</span>
-                    <span className="font-semibold text-gray-900">{progress.current}%</span>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-black h-2 rounded-full transition-all duration-300 animate-pulse" style={{ width: '100%' }} />
                   </div>
+                  <p className="text-sm text-gray-600 text-center">
+                    Processing batch {batchProgress.batch}... ({batchProgress.skipped} skipped)
+                  </p>
                 </div>
               </div>
             )}
@@ -309,16 +330,16 @@ function App() {
 
             {/* Success Result */}
             {result && result.success && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl shadow-sm border-2 border-green-500 p-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <CheckCircle className="w-6 h-6 text-green-600" />
-                  <h3 className="font-semibold text-gray-900">Upload Successful</h3>
+                  <h3 className="font-semibold text-gray-900">Upload Successful!</h3>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Uploaded</div>
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                      <div className="text-xs text-green-700 uppercase tracking-wide mb-1 font-semibold">Uploaded</div>
                       <div className="text-2xl font-bold text-green-600">
                         {result.uploaded_rows?.toLocaleString() || 0}
                       </div>
@@ -363,11 +384,11 @@ function App() {
               <div className="space-y-3 text-sm text-gray-600">
                 <div className="flex items-start space-x-2">
                   <span className="text-black font-bold">1.</span>
-                  <span>Select your Supabase database (MagicPitch or Cloud)</span>
+                  <span>Select your Supabase database</span>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-black font-bold">2.</span>
-                  <span>Choose your instrument (ES or NQ)</span>
+                  <span>Choose instrument (ES or NQ)</span>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-black font-bold">3.</span>
@@ -375,8 +396,13 @@ function App() {
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-black font-bold">4.</span>
-                  <span>Monitor the upload progress</span>
+                  <span>Watch real-time batch progress</span>
                 </div>
+              </div>
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-600">
+                  <span className="font-semibold">Batch Size:</span> 10,000 rows per batch for optimal performance
+                </p>
               </div>
             </div>
           </div>
