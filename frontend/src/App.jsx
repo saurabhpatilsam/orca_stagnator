@@ -1,14 +1,13 @@
-// Dual Supabase Support - Updated 2025-10-13
 import React, { useState } from 'react';
-import { Upload, Database, CheckCircle, XCircle, Loader, AlertCircle } from 'lucide-react';
+import { Upload, Database, Server, CheckCircle, XCircle, Loader2, FileText, Clock, TrendingUp } from 'lucide-react';
 import './App.css';
 
 function App() {
   const [file, setFile] = useState(null);
   const [instrument, setInstrument] = useState('ES');
   const [hasHeader, setHasHeader] = useState(false);
-  const [skipDuplicates, setSkipDuplicates] = useState(false); // Disabled for faster uploads
-  const [supabaseTarget, setSupabaseTarget] = useState('selfhosted'); // 'selfhosted' or 'cloud'
+  const [skipDuplicates, setSkipDuplicates] = useState(false);
+  const [supabaseTarget, setSupabaseTarget] = useState('selfhosted');
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(null);
   const [result, setResult] = useState(null);
@@ -29,7 +28,7 @@ function App() {
       setError(null);
       setResult(null);
     } else {
-      setError('Please drop a TXT file');
+      setError('Please drop a TXT or CSV file');
     }
   };
 
@@ -56,279 +55,334 @@ function App() {
       formData.append('skip_duplicates', skipDuplicates);
       formData.append('supabase_target', supabaseTarget);
 
-      // Use XMLHttpRequest for upload progress
       const xhr = new XMLHttpRequest();
 
-      // Track upload progress
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
           const percentComplete = Math.round((e.loaded / e.total) * 100);
           setProgress({
             current: percentComplete,
             total: 100,
-            message: `Uploading file... ${percentComplete}%`
+            message: `Uploading... ${percentComplete}%`
           });
         }
       });
 
-      // When upload completes, switch to processing message
-      xhr.upload.addEventListener('load', () => {
-        setProgress({ 
-          current: 100, 
-          total: 100, 
-          message: 'Upload complete! Processing file on server...' 
-        });
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          setResult(response);
+          setProgress(null);
+        } else {
+          const errorData = JSON.parse(xhr.responseText);
+          setError(errorData.detail || 'Upload failed');
+          setProgress(null);
+        }
+        setUploading(false);
       });
 
-      // Handle completion
-      const uploadPromise = new Promise((resolve, reject) => {
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              resolve(data);
-            } catch (err) {
-              reject(new Error('Invalid response from server'));
-            }
-          } else {
-            try {
-              const errorData = JSON.parse(xhr.responseText);
-              reject(new Error(errorData.error || `Upload failed with status ${xhr.status}`));
-            } catch (err) {
-              reject(new Error(`Upload failed with status ${xhr.status}`));
-            }
-          }
-        };
-
-        xhr.onerror = () => reject(new Error('Network error occurred'));
-        xhr.ontimeout = () => reject(new Error('Upload timed out - file may be too large'));
-
-        xhr.open('POST', '/api/upload-tick-data');
-        xhr.timeout = 900000; // 15 minutes timeout for large files
-        xhr.send(formData);
+      xhr.addEventListener('error', () => {
+        setError('Network error occurred');
+        setProgress(null);
+        setUploading(false);
       });
 
-      const data = await uploadPromise;
+      xhr.open('POST', '/api/upload-tick-data');
+      xhr.timeout = 900000;
+      xhr.send(formData);
 
-      if (data.success) {
-        setResult(data);
-        setProgress(null);
-      } else {
-        setError(data.error || 'Upload failed');
-        setProgress(null);
-      }
     } catch (err) {
-      setError(`Upload error: ${err.message}`);
+      setError(err.message || 'Upload failed');
       setProgress(null);
-    } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="app">
-      <div className="container">
-        {/* Header */}
-        <div className="header">
-          <Database className="header-icon" size={40} />
-          <h1>Supabase Tick Data Upload</h1>
-          <p className="subtitle">Upload ES/NQ tick-by-tick data to Supabase</p>
-        </div>
-
-        {/* Supabase Target Selection */}
-        <div className="supabase-selector">
-          <label className="selector-label">Select Supabase Database:</label>
-          <div className="selector-buttons">
-            <button
-              className={`selector-btn ${supabaseTarget === 'selfhosted' ? 'active' : ''}`}
-              onClick={() => setSupabaseTarget('selfhosted')}
-            >
-              <Database size={20} />
-              MagicPitch Supabase
-            </button>
-            <button
-              className={`selector-btn ${supabaseTarget === 'cloud' ? 'active' : ''}`}
-              onClick={() => setSupabaseTarget('cloud')}
-            >
-              <Upload size={20} />
-              Supabase Hosted
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center space-x-4">
+            <div className="bg-black p-3 rounded-xl">
+              <Database className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Tick Data Upload</h1>
+              <p className="text-gray-600 mt-1">Upload ES/NQ tick-by-tick data to Supabase</p>
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Upload Area */}
-        <div className="upload-section">
-          <div
-            className={`dropzone ${file ? 'has-file' : ''}`}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-          >
-            <Upload className="dropzone-icon" size={48} />
-            {file ? (
-              <div className="file-info">
-                <p className="file-name">{file.name}</p>
-                <p className="file-size">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-              </div>
-            ) : (
-              <>
-                <p className="dropzone-text">Drag & drop your TXT file here</p>
-                <p className="dropzone-subtext">or click to browse</p>
-              </>
-            )}
-            <input
-              type="file"
-              accept=".txt"
-              onChange={handleFileChange}
-              className="file-input"
-            />
-          </div>
-        </div>
-
-        {/* Configuration */}
-        <div className="config-section">
-          <h3>Upload Configuration</h3>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          <div className="config-grid">
-            {/* Instrument Selection */}
-            <div className="config-item">
-              <label>Instrument</label>
-              <select
-                value={instrument}
-                onChange={(e) => setInstrument(e.target.value)}
-                className="select-input"
-              >
-                <option value="ES">ES (E-mini S&P 500)</option>
-                <option value="NQ">NQ (E-mini NASDAQ)</option>
-              </select>
-            </div>
-
-            {/* Has Header */}
-            <div className="config-item">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={hasHeader}
-                  onChange={(e) => setHasHeader(e.target.checked)}
-                  className="checkbox-input"
-                />
-                <span>File has header row</span>
-              </label>
-            </div>
-
-            {/* Skip Duplicates */}
-            <div className="config-item">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={skipDuplicates}
-                  onChange={(e) => setSkipDuplicates(e.target.checked)}
-                  className="checkbox-input"
-                />
-                <span>Skip duplicate rows</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Upload Button */}
-        <button
-          onClick={handleUpload}
-          disabled={uploading || (!file && !filePath)}
-          className="upload-btn"
-        >
-          {uploading ? (
-            <>
-              <Loader className="spin" size={20} />
-              Uploading...
-            </>
-          ) : (
-            <>
-              <Upload size={20} />
-              Upload to Supabase
-            </>
-          )}
-        </button>
-
-        {/* Progress */}
-        {progress && (
-          <div className="progress-section">
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: progress.total > 0 ? `${(progress.current / progress.total) * 100}%` : '0%'
-                }}
-              />
-            </div>
-            <p className="progress-text">{progress.message}</p>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="alert alert-error">
-            <XCircle size={20} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Success Result */}
-        {result && (
-          <div className="result-section">
-            <div className="alert alert-success">
-              <CheckCircle size={20} />
-              <span>Upload completed successfully!</span>
-            </div>
+          {/* Left Column - Upload Configuration */}
+          <div className="lg:col-span-2 space-y-6">
             
-            <div className="stats-grid">
-              <div className="stat-card">
-                <p className="stat-label">Total Rows</p>
-                <p className="stat-value">{result.total_rows?.toLocaleString()}</p>
-              </div>
-              <div className="stat-card">
-                <p className="stat-label">Uploaded</p>
-                <p className="stat-value success">{result.uploaded_rows?.toLocaleString()}</p>
-              </div>
-              <div className="stat-card">
-                <p className="stat-label">Duplicates Skipped</p>
-                <p className="stat-value warning">{result.skipped_rows?.toLocaleString()}</p>
-              </div>
-              <div className="stat-card">
-                <p className="stat-label">Errors</p>
-                <p className="stat-value error">{result.error_rows?.toLocaleString()}</p>
+            {/* Supabase Target Selection */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Select Database</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setSupabaseTarget('selfhosted')}
+                  className={`p-6 rounded-xl border-2 transition-all duration-200 ${
+                    supabaseTarget === 'selfhosted'
+                      ? 'border-black bg-black text-white shadow-lg'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Server className="w-8 h-8 mb-3 mx-auto" />
+                  <div className="font-semibold">MagicPitch</div>
+                  <div className="text-sm opacity-75 mt-1">Self-Hosted</div>
+                </button>
+                <button
+                  onClick={() => setSupabaseTarget('cloud')}
+                  className={`p-6 rounded-xl border-2 transition-all duration-200 ${
+                    supabaseTarget === 'cloud'
+                      ? 'border-black bg-black text-white shadow-lg'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Database className="w-8 h-8 mb-3 mx-auto" />
+                  <div className="font-semibold">Supabase</div>
+                  <div className="text-sm opacity-75 mt-1">Cloud Hosted</div>
+                </button>
               </div>
             </div>
 
-            {result.date_range && (
-              <div className="date-range">
-                <AlertCircle size={16} />
-                <span>
-                  Date Range: {result.date_range.start} to {result.date_range.end}
-                </span>
+            {/* File Upload */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Upload File</h2>
+              <div
+                className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
+                  file
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+              >
+                <input
+                  type="file"
+                  accept=".txt,.csv"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-input"
+                />
+                <label htmlFor="file-input" className="cursor-pointer">
+                  {file ? (
+                    <div className="space-y-3">
+                      <FileText className="w-16 h-16 mx-auto text-green-600" />
+                      <div>
+                        <p className="text-lg font-semibold text-gray-900">{file.name}</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setFile(null);
+                        }}
+                        className="text-sm text-gray-600 hover:text-gray-900 underline"
+                      >
+                        Change file
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Upload className="w-16 h-16 mx-auto text-gray-400" />
+                      <div>
+                        <p className="text-lg font-medium text-gray-700">Drop your file here</p>
+                        <p className="text-sm text-gray-500 mt-1">or click to browse</p>
+                      </div>
+                      <p className="text-xs text-gray-400">Supports TXT and CSV files</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+            </div>
+
+            {/* Configuration Options */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Configuration</h2>
+              <div className="space-y-4">
+                
+                {/* Instrument */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Instrument
+                  </label>
+                  <select
+                    value={instrument}
+                    onChange={(e) => setInstrument(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                  >
+                    <option value="ES">ES - E-mini S&P 500</option>
+                    <option value="NQ">NQ - E-mini NASDAQ-100</option>
+                  </select>
+                </div>
+
+                {/* Options */}
+                <div className="space-y-3 pt-4">
+                  <label className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-all">
+                    <input
+                      type="checkbox"
+                      checked={hasHeader}
+                      onChange={(e) => setHasHeader(e.target.checked)}
+                      className="w-5 h-5 text-black border-gray-300 rounded focus:ring-black"
+                    />
+                    <span className="text-sm font-medium text-gray-700">File has header row</span>
+                  </label>
+
+                  <label className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-all">
+                    <input
+                      type="checkbox"
+                      checked={skipDuplicates}
+                      onChange={(e) => setSkipDuplicates(e.target.checked)}
+                      className="w-5 h-5 text-black border-gray-300 rounded focus:ring-black"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Skip duplicate rows</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Upload Button */}
+            <button
+              onClick={handleUpload}
+              disabled={!file || uploading}
+              className="w-full bg-black text-white py-4 px-6 rounded-xl font-semibold text-lg hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span>Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-6 h-6" />
+                  <span>Upload to {supabaseTarget === 'selfhosted' ? 'MagicPitch' : 'Supabase Cloud'}</span>
+                </>
+              )}
+            </button>
+
+          </div>
+
+          {/* Right Column - Status & Info */}
+          <div className="space-y-6">
+            
+            {/* Progress */}
+            {progress && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Upload Progress</h3>
+                <div className="space-y-4">
+                  <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="bg-black h-full transition-all duration-300 rounded-full"
+                      style={{ width: `${progress.current}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">{progress.message}</span>
+                    <span className="font-semibold text-gray-900">{progress.current}%</span>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-        )}
 
-        {/* Info Section */}
-        <div className="info-section">
-          <h4>📋 Supported File Formats</h4>
-          <ul>
-            <li>TXT files with comma, tab, or semicolon separators</li>
-            <li>Files with or without header rows</li>
-            <li>Custom timestamp formats (YYYYMMDD HHMMSS)</li>
-            <li>Columns: timestamp, bid, ask, last, volume</li>
-          </ul>
-          
-          <h4>✅ Features</h4>
-          <ul>
-            <li>Automatic duplicate detection (exact row matching)</li>
-            <li>Batch processing for large files (millions of rows)</li>
-            <li>Multiple ticks at same timestamp preserved</li>
-            <li>Real-time progress tracking</li>
-          </ul>
+            {/* Error */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
+                <div className="flex items-start space-x-3">
+                  <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-red-900">Upload Failed</h3>
+                    <p className="text-sm text-red-700 mt-1">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Success Result */}
+            {result && result.success && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                  <h3 className="font-semibold text-gray-900">Upload Successful</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Uploaded</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        {result.uploaded_rows?.toLocaleString() || 0}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Skipped</div>
+                      <div className="text-2xl font-bold text-gray-600">
+                        {result.skipped_rows?.toLocaleString() || 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  {result.date_range && (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Clock className="w-4 h-4" />
+                        <span>
+                          {result.date_range.start} → {result.date_range.end}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-gray-200">
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Table:</span> {result.table}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      <span className="font-medium">Duration:</span> {result.duration}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Info Card */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5" />
+                <span>Quick Guide</span>
+              </h3>
+              <div className="space-y-3 text-sm text-gray-600">
+                <div className="flex items-start space-x-2">
+                  <span className="text-black font-bold">1.</span>
+                  <span>Select your Supabase database (MagicPitch or Cloud)</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-black font-bold">2.</span>
+                  <span>Choose your instrument (ES or NQ)</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-black font-bold">3.</span>
+                  <span>Upload your tick data file</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-black font-bold">4.</span>
+                  <span>Monitor the upload progress</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
-      </div>
+      </main>
     </div>
   );
 }
