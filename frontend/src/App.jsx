@@ -1,415 +1,88 @@
 import React, { useState } from 'react';
-import { Upload, Database, Server, CheckCircle, XCircle, Loader2, FileText, Clock, TrendingUp, Activity } from 'lucide-react';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Layout from './components/Layout';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
+import Algorithm from './components/Algorithm';
+import Backtesting from './components/Backtesting';
+import DataUpload from './components/DataUpload';
 import './App.css';
 
-function App() {
-  const [file, setFile] = useState(null);
-  const [instrument, setInstrument] = useState('ES');
-  const [hasHeader, setHasHeader] = useState(false);
-  const [skipDuplicates, setSkipDuplicates] = useState(false);
-  const [supabaseTarget, setSupabaseTarget] = useState('selfhosted');
-  const [uploading, setUploading] = useState(false);
-  const [batchProgress, setBatchProgress] = useState(null);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
+// Main App Content Component
+function AppContent() {
+  const { user, loading } = useAuth();
+  const [activeSection, setActiveSection] = useState('dashboard');
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    setFile(selectedFile);
-    setError(null);
-    setResult(null);
-  };
+  // Show loading spinner while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400 text-lg">Loading ORCA Trading System...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && (droppedFile.name.endsWith('.csv') || droppedFile.name.endsWith('.txt'))) {
-      setFile(droppedFile);
-      setError(null);
-      setResult(null);
-    } else {
-      setError('Please drop a TXT or CSV file');
+  if (!user) {
+    return <Login />;
+  }
+
+  // Render the active section
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'algorithm':
+        return <Algorithm />;
+      case 'backtesting':
+        return <Backtesting />;
+      case 'data':
+        return <DataUpload />;
+      default:
+        return <Dashboard />;
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
-  const handleUpload = async () => {
-    if (!file) {
-      setError('Please select a file');
-      return;
-    }
-
-    setUploading(true);
-    setError(null);
-    setResult(null);
-    setBatchProgress(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('instrument', instrument);
-      formData.append('has_header', hasHeader);
-      formData.append('skip_duplicates', skipDuplicates);
-      formData.append('supabase_target', supabaseTarget);
-
-      // Use EventSource for Server-Sent Events
-      const response = await fetch('/api/upload-tick-data', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = JSON.parse(line.substring(6));
-            
-            if (data.status === 'uploading') {
-              // Update batch progress
-              setBatchProgress({
-                batch: data.batch,
-                batchRows: data.batch_rows,
-                totalUploaded: data.total_uploaded,
-                totalProcessed: data.total_processed,
-                skipped: data.skipped
-              });
-            } else if (data.status === 'completed') {
-              // Upload completed successfully
-              setResult(data);
-              setBatchProgress(null);
-              setUploading(false);
-            } else if (data.error || data.status === 'error') {
-              // Error occurred
-              setError(data.error || 'Upload failed');
-              setBatchProgress(null);
-              setUploading(false);
-            }
-          }
-        }
-      }
-
-    } catch (err) {
-      setError(err.message || 'Upload failed');
-      setBatchProgress(null);
-      setUploading(false);
-    }
-  };
-
+  // Main application layout
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center space-x-4">
-            <div className="bg-black p-3 rounded-xl">
-              <Database className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Tick Data Upload</h1>
-              <p className="text-gray-600 mt-1">Upload ES/NQ tick-by-tick data to Supabase</p>
-            </div>
-          </div>
-        </div>
-      </header>
+    <Layout activeSection={activeSection} setActiveSection={setActiveSection}>
+      {renderContent()}
+    </Layout>
+  );
+}
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column - Upload Configuration */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* Supabase Target Selection */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Select Database</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  onClick={() => setSupabaseTarget('selfhosted')}
-                  className={`p-6 rounded-xl border-2 transition-all duration-200 ${
-                    supabaseTarget === 'selfhosted'
-                      ? 'border-black bg-black text-white shadow-lg'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Server className="w-8 h-8 mb-3 mx-auto" />
-                  <div className="font-semibold">MagicPitch</div>
-                  <div className="text-sm opacity-75 mt-1">Self-Hosted</div>
-                </button>
-                <button
-                  onClick={() => setSupabaseTarget('cloud')}
-                  className={`p-6 rounded-xl border-2 transition-all duration-200 ${
-                    supabaseTarget === 'cloud'
-                      ? 'border-black bg-black text-white shadow-lg'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Database className="w-8 h-8 mb-3 mx-auto" />
-                  <div className="font-semibold">Supabase</div>
-                  <div className="text-sm opacity-75 mt-1">Cloud Hosted</div>
-                </button>
-              </div>
-            </div>
-
-            {/* File Upload */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Upload File</h2>
-              <div
-                className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
-                  file
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-              >
-                <input
-                  type="file"
-                  accept=".txt,.csv"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="file-input"
-                />
-                <label htmlFor="file-input" className="cursor-pointer">
-                  {file ? (
-                    <div className="space-y-3">
-                      <FileText className="w-16 h-16 mx-auto text-green-600" />
-                      <div>
-                        <p className="text-lg font-semibold text-gray-900">{file.name}</p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setFile(null);
-                        }}
-                        className="text-sm text-gray-600 hover:text-gray-900 underline"
-                      >
-                        Change file
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <Upload className="w-16 h-16 mx-auto text-gray-400" />
-                      <div>
-                        <p className="text-lg font-medium text-gray-700">Drop your file here</p>
-                        <p className="text-sm text-gray-500 mt-1">or click to browse</p>
-                      </div>
-                      <p className="text-xs text-gray-400">Supports TXT and CSV files</p>
-                    </div>
-                  )}
-                </label>
-              </div>
-            </div>
-
-            {/* Configuration Options */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Configuration</h2>
-              <div className="space-y-4">
-                
-                {/* Instrument */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Instrument
-                  </label>
-                  <select
-                    value={instrument}
-                    onChange={(e) => setInstrument(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-                  >
-                    <option value="ES">ES - E-mini S&P 500</option>
-                    <option value="NQ">NQ - E-mini NASDAQ-100</option>
-                  </select>
-                </div>
-
-                {/* Options */}
-                <div className="space-y-3 pt-4">
-                  <label className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-all">
-                    <input
-                      type="checkbox"
-                      checked={hasHeader}
-                      onChange={(e) => setHasHeader(e.target.checked)}
-                      className="w-5 h-5 text-black border-gray-300 rounded focus:ring-black"
-                    />
-                    <span className="text-sm font-medium text-gray-700">File has header row</span>
-                  </label>
-
-                  <label className="flex items-center space-x-3 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-all">
-                    <input
-                      type="checkbox"
-                      checked={skipDuplicates}
-                      onChange={(e) => setSkipDuplicates(e.target.checked)}
-                      className="w-5 h-5 text-black border-gray-300 rounded focus:ring-black"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Skip duplicate rows</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Upload Button */}
-            <button
-              onClick={handleUpload}
-              disabled={!file || uploading}
-              className="w-full bg-black text-white py-4 px-6 rounded-xl font-semibold text-lg hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3"
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                  <span>Uploading...</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-6 h-6" />
-                  <span>Upload to {supabaseTarget === 'selfhosted' ? 'MagicPitch' : 'Supabase Cloud'}</span>
-                </>
-              )}
-            </button>
-
-          </div>
-
-          {/* Right Column - Status & Info */}
-          <div className="space-y-6">
-            
-            {/* Batch Progress */}
-            {batchProgress && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Activity className="w-5 h-5 text-black animate-pulse" />
-                  <h3 className="font-semibold text-gray-900">Uploading Batches</h3>
-                </div>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Batch #{batchProgress.batch}</div>
-                      <div className="text-xl font-bold text-black">
-                        {batchProgress.batchRows?.toLocaleString()} rows
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total</div>
-                      <div className="text-xl font-bold text-green-600">
-                        {batchProgress.totalUploaded?.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-black h-2 rounded-full transition-all duration-300 animate-pulse" style={{ width: '100%' }} />
-                  </div>
-                  <p className="text-sm text-gray-600 text-center">
-                    Processing batch {batchProgress.batch}... ({batchProgress.skipped} skipped)
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Error */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
-                <div className="flex items-start space-x-3">
-                  <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-red-900">Upload Failed</h3>
-                    <p className="text-sm text-red-700 mt-1">{error}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Success Result */}
-            {result && result.success && (
-              <div className="bg-white rounded-2xl shadow-sm border-2 border-green-500 p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                  <h3 className="font-semibold text-gray-900">Upload Successful!</h3>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                      <div className="text-xs text-green-700 uppercase tracking-wide mb-1 font-semibold">Uploaded</div>
-                      <div className="text-2xl font-bold text-green-600">
-                        {result.uploaded_rows?.toLocaleString() || 0}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Skipped</div>
-                      <div className="text-2xl font-bold text-gray-600">
-                        {result.skipped_rows?.toLocaleString() || 0}
-                      </div>
-                    </div>
-                  </div>
-
-                  {result.date_range && (
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Clock className="w-4 h-4" />
-                        <span>
-                          {result.date_range.start} → {result.date_range.end}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="pt-3 border-t border-gray-200">
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Table:</span> {result.table}
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">Duration:</span> {result.duration}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Info Card */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5" />
-                <span>Quick Guide</span>
-              </h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                <div className="flex items-start space-x-2">
-                  <span className="text-black font-bold">1.</span>
-                  <span>Select your Supabase database</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="text-black font-bold">2.</span>
-                  <span>Choose instrument (ES or NQ)</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="text-black font-bold">3.</span>
-                  <span>Upload your tick data file</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="text-black font-bold">4.</span>
-                  <span>Watch real-time batch progress</span>
-                </div>
-              </div>
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-600">
-                  <span className="font-semibold">Batch Size:</span> 10,000 rows per batch for optimal performance
-                </p>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </main>
-    </div>
+// Root App Component with Providers
+function App() {
+  return (
+    <AuthProvider>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+            border: '1px solid #374151',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+      <AppContent />
+    </AuthProvider>
   );
 }
 

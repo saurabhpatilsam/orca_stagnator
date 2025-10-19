@@ -201,27 +201,72 @@ class TradingViewTradovateBroker:
         account_id: str,
     ) -> Optional[str]:
         """
-        Place a new order.
+        Place a new order with smart order type selection.
+        Automatically determines if order should be LIMIT or STOP based on current price.
 
         Args:
           Order
         Returns:
             Order ID of primary order / None
         """
+        # Step 1: Fetch current price
+        try:
+            quote_response = self.get_price_quotes(symbol=order.instrument)
+            if hasattr(quote_response, 'd') and quote_response.d:
+                quote_data = quote_response.d[0]['v']
+                current_price = float(quote_data.get('lp', quote_data.get('ask', order.price)))
+                logger.info(f"Current market price for {order.instrument}: ${current_price:.2f}")
+            else:
+                current_price = order.price
+                logger.warning(f"Could not fetch price, using order price: ${current_price:.2f}")
+        except Exception as e:
+            current_price = order.price
+            logger.warning(f"Error fetching price: {e}, using order price: ${current_price:.2f}")
+        
+        # Step 2: Determine order type based on price relationship
+        side = order.position.lower()
+        target_price = order.price
+        
+        if side == "buy":
+            if target_price < current_price:
+                order_type = OrderTypes.LIMIT.value
+                logger.info(f"Using LIMIT order (buying BELOW market: ${target_price:.2f} < ${current_price:.2f})")
+            else:
+                order_type = OrderTypes.STOP.value
+                logger.info(f"Using STOP order (buying ABOVE market: ${target_price:.2f} > ${current_price:.2f})")
+        else:  # sell
+            if target_price > current_price:
+                order_type = OrderTypes.LIMIT.value
+                logger.info(f"Using LIMIT order (selling ABOVE market: ${target_price:.2f} > ${current_price:.2f})")
+            else:
+                order_type = OrderTypes.STOP.value
+                logger.info(f"Using STOP order (selling BELOW market: ${target_price:.2f} < ${current_price:.2f})")
+        
         logger.info(
-            f"Placing quantity:{order.quantity} order for `{order.instrument}` at `{order.price}`"
+            f"Placing {order_type} order: {side.upper()} {order.quantity} {order.instrument} @ ${order.price:.2f}"
         )
-        # Prepare order data
+        
+        # Step 3: Prepare order data
         order_data = {
             "instrument": order.instrument,
             "qty": str(order.quantity),
-            "side": order.position.lower(),
-            'type': OrderTypes.LIMIT.value,
-            "limitPrice": str(order.price),
-            "stopLoss": str(order.stop_loss),
-            "takeProfit": str(order.take_profit),
+            "side": side,
+            'type': order_type,
             "durationType": "Day",
         }
+        
+        # Use correct price parameter based on order type
+        if order_type == OrderTypes.STOP.value:
+            order_data["stopPrice"] = str(order.price)
+        else:
+            order_data["limitPrice"] = str(order.price)
+        
+        # Add stop loss and take profit if provided
+        if order.stop_loss > 0:
+            order_data["stopLoss"] = str(order.stop_loss)
+        if order.take_profit > 0:
+            order_data["takeProfit"] = str(order.take_profit)
+        
         endpoint = f"/accounts/{account_id}/orders?locale=en"
         response: BrokerResponseSchema = self._make_request(
             "POST", endpoint, order_data

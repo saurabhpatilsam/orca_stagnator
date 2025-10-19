@@ -7,16 +7,28 @@ import uvicorn
 from datetime import datetime
 import json
 
-app = FastAPI(title="Trading Bot API")
+# Import routers
+from app.api.v1.trading_api_router import trading_router
+from app.api.v1.orca_max_router import max_router
+
+app = FastAPI(
+    title="ORCA Trading System API",
+    description="High-Performance Trading API optimized for HFT and Medium-Frequency Trading",
+    version="2.0.0"
+)
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(trading_router, prefix="/api/v1", tags=["HFT Trading"])
+app.include_router(max_router, prefix="/api/v1", tags=["Max Trading Bot"])
 
 
 # Pydantic models

@@ -1,0 +1,9 @@
+# 🛡️ Security: Never commit actual API keys
+.env
+*.key
+github.token
+vercel.token
+supabase.token
+railway.token
+*.secret
+*.credentials

@@ -1,0 +1,51 @@
+{
+  "mcpServers": {
+    "github": {
+      "serverUrl": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
+      }
+    },
+    "vercel": {
+      "serverUrl": "https://mcp.vercel.com",
+      "headers": {
+        "Authorization": "Bearer ${VERCEL_TOKEN}"
+      }
+    },
+    "supabase-mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--access-token",
+        "${SUPABASE_TOKEN}"
+      ],
+      "env": {}
+    },
+    "railway": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@railway/mcp-server"
+      ]
+    },
+    "mcpify-ninja-trader-python-bridge-mcp": {
+      "command": "npx",
+      "args": [
+        "@composio/mcp@latest",
+        "start",
+        "--url",
+        "https://agent.mcpify.ai/sse?server=b5ff8dce-f740-45db-91a7-14d0fff22898"
+      ]
+    },
+    "mcpify-google-places-serp-tools": {
+      "command": "npx",
+      "args": [
+        "@composio/mcp@latest",
+        "start",
+        "--url",
+        "https://agent.mcpify.ai/sse?server=a2cca30d-4210-44ef-8da9-dcf164ccc4ed"
+      ]
+    }
+  }
+}
