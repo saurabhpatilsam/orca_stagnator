@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../config/api';
+import { supabase } from '../config/supabase';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext({});
@@ -13,35 +13,46 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check if user is already logged in
-    const checkAuth = () => {
+    const checkAuth = async () => {
       try {
-        const currentUser = authAPI.getCurrentUser();
-        const token = authAPI.getToken();
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (currentUser && token) {
-          setUser(currentUser);
-          setSession({ user: currentUser, access_token: token });
+        if (session) {
+          setUser(session.user);
+          setSession(session);
         }
       } catch (error) {
         console.error('Auth check failed:', error);
-        authAPI.signOut();
       } finally {
         setLoading(false);
       }
     };
 
     checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email, password) => {
     try {
-      const response = await authAPI.signIn(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      setUser(response.user);
-      setSession({ user: response.user, access_token: response.access_token });
+      if (error) throw error;
+      
+      setUser(data.user);
+      setSession(data.session);
       
       toast.success('Successfully signed in!');
-      return { data: response, error: null };
+      return { data, error: null };
     } catch (error) {
       toast.error(error.message || 'Sign in failed');
       return { data: null, error };
@@ -50,13 +61,27 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password) => {
     try {
-      const response = await authAPI.signUp(email, password);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin + '/dashboard',
+        }
+      });
       
-      setUser(response.user);
-      setSession({ user: response.user, access_token: response.access_token });
+      if (error) throw error;
+      
+      // Check if email confirmation is required
+      if (data.user && !data.session) {
+        toast.success('Please check your email to confirm your account!');
+        return { data, error: null };
+      }
+      
+      setUser(data.user);
+      setSession(data.session);
       
       toast.success('Account created successfully!');
-      return { data: response, error: null };
+      return { data, error: null };
     } catch (error) {
       toast.error(error.message || 'Sign up failed');
       return { data: null, error };
@@ -65,7 +90,7 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      authAPI.signOut();
+      await supabase.auth.signOut();
       setUser(null);
       setSession(null);
       
