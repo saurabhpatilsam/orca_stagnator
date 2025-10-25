@@ -1,0 +1,336 @@
+{
+  "info": {
+    "name": "ORCA - Supabase Edge Functions",
+    "description": "Supabase serverless functions for fetching and storing candlestick data from Tradovate",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "orca-supabase-functions-003",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "SUPABASE_URL",
+      "value": "https://dcoukhtfcloqpfmijock.supabase.co",
+      "type": "string",
+      "description": "Supabase project URL"
+    },
+    {
+      "key": "SUPABASE_ANON_KEY",
+      "value": "",
+      "type": "string",
+      "description": "Supabase anonymous key"
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjb3VraHRmY2xvcXBmbWlqb2NrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MzcwMTgwMywiZXhwIjoyMDY5Mjc3ODAzfQ.iNzNrB0z64m8cINx0DeVCuAbcStWpMPx_bDos_vgO7w",
+      "type": "string",
+      "description": "Supabase service role key (for admin operations)"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{SUPABASE_SERVICE_ROLE_KEY}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Candle Data Fetchers",
+      "item": [
+        {
+          "name": "Fetch Real-Time Candles - 1min",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timeframe\": 1\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/fetch-candles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "fetch-candles"]
+            },
+            "description": "Fetch real-time 1-minute candles via WebSocket. Stores in nq_candles_1min table. Returns last 10 candles."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Real-Time Candles - 5min",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timeframe\": 5\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/fetch-candles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "fetch-candles"]
+            },
+            "description": "Fetch real-time 5-minute candles via WebSocket. Stores in nq_candles_5min table."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Real-Time Candles - 10min",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timeframe\": 10\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/fetch-candles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "fetch-candles"]
+            },
+            "description": "Fetch real-time 10-minute candles via WebSocket. Stores in nq_candles_10min table."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Real-Time Candles - 15min",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timeframe\": 15\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/fetch-candles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "fetch-candles"]
+            },
+            "description": "Fetch real-time 15-minute candles via WebSocket. Stores in nq_candles_15min table."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Real-Time Candles - 30min",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timeframe\": 30\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/fetch-candles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "fetch-candles"]
+            },
+            "description": "Fetch real-time 30-minute candles via WebSocket. Stores in nq_candles_30min table."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Real-Time Candles - 60min",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timeframe\": 60\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/fetch-candles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "fetch-candles"]
+            },
+            "description": "Fetch real-time 60-minute (1 hour) candles via WebSocket. Stores in nq_candles_1hour table."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Historical Data",
+      "item": [
+        {
+          "name": "Fetch Historical Candles",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timeframe\": 30,\n  \"symbol\": \"MNQZ5\",\n  \"startDate\": \"2025-01-01T00:00:00Z\",\n  \"endDate\": \"2025-01-21T23:59:59Z\",\n  \"barsPerRequest\": 100\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/fetch-historical-candles",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "fetch-historical-candles"]
+            },
+            "description": "Fetch historical candle data for backfilling. Supports all timeframes (1, 5, 10, 15, 30, 60 minutes).\n\nNote: This function may take longer for large date ranges as it makes multiple API calls."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Automation",
+      "item": [
+        {
+          "name": "Scheduler - Trigger All Fetchers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"fetch_all\"\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/scheduler",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "scheduler"]
+            },
+            "description": "Trigger scheduler to fetch all timeframes sequentially. Used for manual testing or one-time bulk updates.\n\nAutomated via pg_cron jobs:\n- 1min: Every minute\n- 5min: Every 5 minutes\n- 10min: Every 10 minutes\n- 15min: Every 15 minutes\n- 30min: Every 30 minutes\n- 60min: Every hour"
+          },
+          "response": []
+        },
+        {
+          "name": "Token Manager - Refresh Tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SUPABASE_SERVICE_ROLE_KEY}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"refresh\"\n}"
+            },
+            "url": {
+              "raw": "{{SUPABASE_URL}}/functions/v1/token-manager",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": ["functions", "v1", "token-manager"]
+            },
+            "description": "Manually trigger token refresh for all Tradovate accounts. Tokens are normally managed by token_generator_and_redis_manager.py running on the server.\n\nAccounts managed:\n- APEX_266668 (4 accounts)\n- APEX_272045 (5 accounts)\n- APEX_136189 (3 accounts)\n- APEX_265995 (1 account)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Database Tables",
+      "item": [
+        {
+          "name": "Database Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{SUPABASE_URL}}/",
+              "host": ["{{SUPABASE_URL}}"],
+              "path": [""]
+            },
+            "description": "Supabase Database Tables and RPC Functions\n\n**Candle Tables:**\n- nq_candles_1min\n- nq_candles_5min\n- nq_candles_10min\n- nq_candles_15min\n- nq_candles_30min\n- nq_candles_1hour\n\n**Table Schema:**\n- id (bigint, primary key)\n- symbol (text)\n- candle_time (timestamptz)\n- open (numeric)\n- high (numeric)\n- low (numeric)\n- close (numeric)\n- volume (bigint)\n- up_volume (bigint)\n- down_volume (bigint)\n- up_ticks (bigint)\n- down_ticks (bigint)\n- created_at (timestamptz)\n\n**RPC Functions:**\n- insert_nq_candles_1min(p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)\n- insert_nq_candles_5min(...)\n- insert_nq_candles_10min(...)\n- insert_nq_candles_15min(...)\n- insert_nq_candles_30min(...)\n- insert_nq_candles_1hour(...)\n\n**Indexes:**\n- Unique index on (symbol, candle_time)\n- Index on candle_time for time-series queries\n\n**Access via Supabase Client:**\n```javascript\nconst { data, error } = await supabase\n  .from('nq_candles_30min')\n  .select('*')\n  .eq('symbol', 'MNQZ5')\n  .gte('candle_time', '2025-01-01')\n  .order('candle_time', { ascending: false })\n  .limit(100)\n```"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

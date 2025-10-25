@@ -1,0 +1,447 @@
+{
+  "summary": {
+    "APEX_272045": {
+      "status": "Success",
+      "accounts": [
+        "PAAPEX2720450000001",
+        "PAAPEX2720450000002",
+        "PAAPEX2720450000003",
+        "PAAPEX2720450000004",
+        "PAAPEX2720450000005"
+      ],
+      "count": 5
+    },
+    "APEX_136189": {
+      "status": "Success",
+      "accounts": [
+        "PAAPEX1361890000010",
+        "PAAPEX1361890000011",
+        "APEX13618900000118"
+      ],
+      "count": 3
+    },
+    "APEX_265995": {
+      "status": "Success",
+      "accounts": [
+        "PAAPEX2659950000005"
+      ],
+      "count": 1
+    },
+    "APEX_266668": {
+      "status": "Success",
+      "accounts": [
+        "PAAPEX2666680000001",
+        "PAAPEX2666680000003",
+        "PAAPEX2666680000004",
+        "PAAPEX2666680000005"
+      ],
+      "count": 4
+    }
+  },
+  "total_accounts": 13,
+  "accounts_detail": [
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000001",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D17200370",
+        "name": "PAAPEX2720450000001",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000002",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D17200423",
+        "name": "PAAPEX2720450000002",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000003",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D17200474",
+        "name": "PAAPEX2720450000003",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000004",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D17200522",
+        "name": "PAAPEX2720450000004",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000005",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D18155916",
+        "name": "PAAPEX2720450000005",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_136189",
+      "account_id": "PAAPEX1361890000010",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D18156785",
+        "name": "PAAPEX1361890000010",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_136189",
+      "account_id": "PAAPEX1361890000011",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D30471976",
+        "name": "PAAPEX1361890000011",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_136189",
+      "account_id": "APEX13618900000118",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D31104612",
+        "name": "APEX13618900000118",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_265995",
+      "account_id": "PAAPEX2659950000005",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D18156168",
+        "name": "PAAPEX2659950000005",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_266668",
+      "account_id": "PAAPEX2666680000001",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D17158695",
+        "name": "PAAPEX2666680000001",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_266668",
+      "account_id": "PAAPEX2666680000003",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D17159229",
+        "name": "PAAPEX2666680000003",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_266668",
+      "account_id": "PAAPEX2666680000004",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D18155676",
+        "name": "PAAPEX2666680000004",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    },
+    {
+      "username": "APEX_266668",
+      "account_id": "PAAPEX2666680000005",
+      "account_type": "Demo",
+      "active": true,
+      "full_data": {
+        "id": "D18155751",
+        "name": "PAAPEX2666680000005",
+        "type": "demo",
+        "currency": "USD",
+        "currencySign": "$",
+        "config": {
+          "showQuantityInsteadOfAmount": true,
+          "supportDOM": true,
+          "supportOrderBrackets": true,
+          "supportPositionBrackets": false,
+          "supportClosePosition": true,
+          "supportEditAmount": true,
+          "supportLevel2Data": true,
+          "supportMultiposition": false,
+          "supportPLUpdate": false,
+          "supportReducePosition": false,
+          "supportStopLimitOrders": true,
+          "supportOrdersHistory": false,
+          "supportExecutions": true,
+          "supportDigitalSignature": false,
+          "supportBalances": false
+        },
+        "isVerified": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,496 @@
+{
+  "info": {
+    "name": "ORCA - Internal Backend APIs",
+    "description": "FastAPI endpoints for ORCA Trading System - HFT Trading, Max Bot, and Data Upload",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "orca-internal-apis-001",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "Root Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/health/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "health", ""]
+            },
+            "description": "Basic health check endpoint for the main API"
+          },
+          "response": []
+        },
+        {
+          "name": "Trading API Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/trading/health",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "trading", "health"]
+            },
+            "description": "Health check for trading API with Redis and broker connectivity"
+          },
+          "response": []
+        },
+        {
+          "name": "Data Upload API Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/health",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Health check for CSV upload API service"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "HFT Trading API",
+      "item": [
+        {
+          "name": "Get All Accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/trading/accounts?use_cache=true&account_name=PAAPEX2666680000001",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "trading", "accounts"],
+              "query": [
+                {
+                  "key": "use_cache",
+                  "value": "true",
+                  "description": "Use cached data if available (default: true)"
+                },
+                {
+                  "key": "account_name",
+                  "value": "PAAPEX2666680000001",
+                  "description": "Account name for authentication"
+                }
+              ]
+            },
+            "description": "Get all accounts in the Tradovate user. Cached for 5 minutes. Response time: <50ms (cached), <500ms (fresh)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Positions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/trading/positions?use_cache=false&account_ids=D17158695,D17159229&account_name=PAAPEX2666680000001",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "trading", "positions"],
+              "query": [
+                {
+                  "key": "use_cache",
+                  "value": "false",
+                  "description": "Use cached data (not recommended for HFT)"
+                },
+                {
+                  "key": "account_ids",
+                  "value": "D17158695,D17159229",
+                  "description": "Comma-separated account IDs (optional)"
+                },
+                {
+                  "key": "account_name",
+                  "value": "PAAPEX2666680000001",
+                  "description": "Account name for authentication"
+                }
+              ]
+            },
+            "description": "Get all active positions across accounts. Cache TTL = 1s. Response time: <100ms (cached), <800ms (fresh)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Position IDs Only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/trading/positions/ids?use_cache=false&account_name=PAAPEX2666680000001",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "trading", "positions", "ids"],
+              "query": [
+                {
+                  "key": "use_cache",
+                  "value": "false"
+                },
+                {
+                  "key": "account_name",
+                  "value": "PAAPEX2666680000001"
+                }
+              ]
+            },
+            "description": "Ultra-fast endpoint to get only position IDs. Minimal payload, <50ms response time"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/trading/orders/pending?use_cache=false&account_name=PAAPEX2666680000001",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "trading", "orders", "pending"],
+              "query": [
+                {
+                  "key": "use_cache",
+                  "value": "false",
+                  "description": "Use cached data"
+                },
+                {
+                  "key": "account_name",
+                  "value": "PAAPEX2666680000001"
+                }
+              ]
+            },
+            "description": "Get all pending orders across accounts. Cache TTL = 1s. Response time: <100ms (cached), <1000ms (fresh)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Order IDs Only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/trading/orders/pending/ids?use_cache=false&account_name=PAAPEX2666680000001",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "trading", "orders", "pending", "ids"],
+              "query": [
+                {
+                  "key": "use_cache",
+                  "value": "false"
+                },
+                {
+                  "key": "account_name",
+                  "value": "PAAPEX2666680000001"
+                }
+              ]
+            },
+            "description": "Ultra-fast endpoint to get only pending order IDs. Minimal payload, <50ms response time"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Account Balances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/trading/balances?use_cache=true&account_name=PAAPEX2666680000001",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "trading", "balances"],
+              "query": [
+                {
+                  "key": "use_cache",
+                  "value": "true",
+                  "description": "Use cached data"
+                },
+                {
+                  "key": "account_name",
+                  "value": "PAAPEX2666680000001"
+                }
+              ]
+            },
+            "description": "Get account balances for all accounts. Cache TTL = 2s. Response time: <100ms (cached), <1200ms (fresh)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trading Snapshot (Batch)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/trading/batch/snapshot?include_accounts=true&include_positions=true&include_orders=true&include_balances=true&use_cache=false&account_name=PAAPEX2666680000001",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "trading", "batch", "snapshot"],
+              "query": [
+                {
+                  "key": "include_accounts",
+                  "value": "true"
+                },
+                {
+                  "key": "include_positions",
+                  "value": "true"
+                },
+                {
+                  "key": "include_orders",
+                  "value": "true"
+                },
+                {
+                  "key": "include_balances",
+                  "value": "true"
+                },
+                {
+                  "key": "use_cache",
+                  "value": "false"
+                },
+                {
+                  "key": "account_name",
+                  "value": "PAAPEX2666680000001"
+                }
+              ]
+            },
+            "description": "Get complete trading snapshot in a single call. Response time: <200ms (cached), <2000ms (fresh). Use for dashboard updates and bot startup."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Max Trading Bot API",
+      "item": [
+        {
+          "name": "Run Max Backtest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "accountName",
+                  "value": "APEX_136189",
+                  "type": "text",
+                  "description": "Trading account name"
+                },
+                {
+                  "key": "mode",
+                  "value": "backtesting",
+                  "type": "text",
+                  "description": "Trading mode"
+                },
+                {
+                  "key": "contract",
+                  "value": "NQ",
+                  "type": "text",
+                  "description": "Contract symbol (NQ, ES, etc.)"
+                },
+                {
+                  "key": "maxMode",
+                  "value": "both",
+                  "type": "text",
+                  "description": "Max mode value (long, short, both)"
+                },
+                {
+                  "key": "point_key",
+                  "value": "15_7_5_2",
+                  "type": "text",
+                  "description": "Point strategy key"
+                },
+                {
+                  "key": "exit_strategy_key",
+                  "value": "15_15",
+                  "type": "text",
+                  "description": "Exit strategy key"
+                },
+                {
+                  "key": "notes",
+                  "value": "Test backtest run",
+                  "type": "text",
+                  "description": "Optional notes"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2025-01-01",
+                  "type": "text",
+                  "description": "Start date (if not using file)"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2025-01-21",
+                  "type": "text",
+                  "description": "End date (if not using file)"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Optional CSV file with tick data"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/run-bot/max-backtest",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "run-bot", "max-backtest"]
+            },
+            "description": "Run Max trading bot in backtesting mode. Either provide a file OR dateFrom/dateTo parameters."
+          },
+          "response": []
+        },
+        {
+          "name": "Run Max Live Trading",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "accountName",
+                  "value": "APEX_136189",
+                  "type": "text",
+                  "description": "Main trading account"
+                },
+                {
+                  "key": "contract",
+                  "value": "NQ",
+                  "type": "text",
+                  "description": "Contract to trade"
+                },
+                {
+                  "key": "maxMode",
+                  "value": "both",
+                  "type": "text"
+                },
+                {
+                  "key": "trading_mode",
+                  "value": "both",
+                  "type": "text",
+                  "description": "Trading mode (long, short, both)"
+                },
+                {
+                  "key": "trading_side",
+                  "value": "both",
+                  "type": "text",
+                  "description": "Trading side"
+                },
+                {
+                  "key": "point_strategy_key",
+                  "value": "15_7_5_2",
+                  "type": "text"
+                },
+                {
+                  "key": "exit_strategy_key",
+                  "value": "15_15",
+                  "type": "text"
+                },
+                {
+                  "key": "quantity",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "environment",
+                  "value": "DEMO",
+                  "type": "text",
+                  "description": "DEMO or LIVE"
+                },
+                {
+                  "key": "accounts_ids",
+                  "value": "[{\"tv_id\":\"D18156785\",\"ta_id\":\"PAAPEX1361890000010\"}]",
+                  "type": "text",
+                  "description": "JSON array of account IDs"
+                },
+                {
+                  "key": "notes",
+                  "value": "Live trading session",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/run-bot/max",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "run-bot", "max"]
+            },
+            "description": "Run Max trading bot in live trading mode"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Data Upload API",
+      "item": [
+        {
+          "name": "Upload Tick Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "CSV/TXT file with tick data (max 300MB)"
+                },
+                {
+                  "key": "instrument",
+                  "value": "NQ",
+                  "type": "text",
+                  "description": "Instrument symbol (ES or NQ)"
+                },
+                {
+                  "key": "has_header",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Whether CSV has header row"
+                },
+                {
+                  "key": "skip_duplicates",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Skip duplicate records"
+                },
+                {
+                  "key": "supabase_target",
+                  "value": "selfhosted",
+                  "type": "text",
+                  "description": "Supabase target (selfhosted or cloud)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/upload-tick-data",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "upload-tick-data"]
+            },
+            "description": "Upload tick data CSV with real-time progress streaming (SSE). Supports ES and NQ instruments up to 300MB per file."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

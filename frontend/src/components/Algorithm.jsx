@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Play, 
@@ -11,14 +11,14 @@ import {
   AlertTriangle,
   Check
 } from 'lucide-react';
-import { supabase } from '../config/supabase';
+import { apiClient } from '../config/api';
 import toast from 'react-hot-toast';
 
-const Algorithm = () => {
+const Algorithm = ({ onStatusChange }) => {
   const [algorithmConfig, setAlgorithmConfig] = useState({
     name: '9 Point',
-    instrument: 'ESZ5',
-    accountName: 'PAAPEX1361890000010',
+    instrument: '',
+    accountName: '',
     pointsSpacing: 9,
     maxOrdersPerSide: 5,
     stopLossPoints: 5,
@@ -32,18 +32,57 @@ const Algorithm = () => {
 
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [algorithmId, setAlgorithmId] = useState(null);
+  const [instruments, setInstruments] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
 
-  const instruments = [
-    { value: 'ESZ5', label: 'ES December 2025' },
-    { value: 'NQZ5', label: 'NQ December 2025' },
-    { value: 'MESZ5', label: 'MES December 2025' },
-    { value: 'MNQZ5', label: 'MNQ December 2025' }
-  ];
+  useEffect(() => {
+    fetchInstrumentsAndAccounts();
+  }, []);
 
-  const accounts = [
-    { value: 'PAAPEX1361890000010', label: 'Demo Account 10' },
-    { value: 'PAAPEX1361890000011', label: 'Demo Account 11' }
-  ];
+  const fetchInstrumentsAndAccounts = async () => {
+    try {
+      setLoadingData(true);
+      
+      // Fetch instruments
+      const instrumentsRes = await fetch('http://localhost:8000/api/instruments');
+      const instrumentsData = await instrumentsRes.json();
+      
+      // Fetch accounts
+      const accountsRes = await fetch('http://localhost:8000/api/accounts');
+      const accountsData = await accountsRes.json();
+      
+      if (instrumentsData.instruments) {
+        setInstruments(instrumentsData.instruments.map(inst => ({
+          value: inst.symbol,
+          label: `${inst.symbol} - ${inst.name}`
+        })));
+        
+        // Set first instrument as default
+        if (instrumentsData.instruments.length > 0) {
+          setAlgorithmConfig(prev => ({
+            ...prev,
+            instrument: instrumentsData.instruments[0].symbol
+          }));
+        }
+      }
+      
+      if (accountsData.accounts && accountsData.accounts.length > 0) {
+        setAccounts(accountsData.accounts.map(acc => ({
+          value: acc.id || acc.account_id,
+          label: `${acc.name || acc.account_name} - ${acc.balance ? `$${acc.balance.toLocaleString()}` : 'N/A'}`
+        })));
+      } else if (accountsData.error) {
+        toast.error(accountsData.error);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch instruments and accounts');
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   const handleConfigChange = (field, value) => {
     setAlgorithmConfig(prev => ({
@@ -55,36 +94,18 @@ const Algorithm = () => {
   const startAlgorithm = async () => {
     setLoading(true);
     try {
-      // Save algorithm configuration to Supabase
-      const { data, error } = await supabase
-        .from('active_algorithms')
-        .insert([{
-          name: algorithmConfig.name,
-          config: algorithmConfig,
-          status: 'running',
-          started_at: new Date(),
-          account: algorithmConfig.accountName,
-          instrument: algorithmConfig.instrument
-        }]);
-
-      if (error) {
-        // If table doesn't exist, just simulate
-        console.log('Starting algorithm with config:', algorithmConfig);
+      const response = await apiClient.post('/api/algorithms/start', algorithmConfig);
+      
+      if (response.success) {
+        setIsRunning(true);
+        setAlgorithmId(response.algorithmId);
+        toast.success(`${algorithmConfig.name} algorithm started successfully!`);
+        
+        // Update parent component status
+        if (onStatusChange) {
+          onStatusChange('running');
+        }
       }
-
-      setIsRunning(true);
-      toast.success(`${algorithmConfig.name} algorithm started successfully!`);
-
-      // In production, this would trigger the actual trading algorithm
-      // via API call to the backend
-      await fetch('/api/algorithms/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(algorithmConfig)
-      }).catch(() => {
-        // Ignore fetch error in development
-        console.log('Algorithm started (dev mode)');
-      });
     } catch (error) {
       toast.error('Failed to start algorithm');
       console.error(error);

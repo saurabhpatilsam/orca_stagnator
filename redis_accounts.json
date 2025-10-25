@@ -1,0 +1,102 @@
+{
+  "usernames": [
+    "APEX_136189",
+    "APEX_265995",
+    "APEX_266668",
+    "APEX_272045"
+  ],
+  "total_accounts": 13,
+  "accounts": [
+    {
+      "username": "APEX_136189",
+      "account_id": "PAAPEX1361890000010",
+      "index": 1,
+      "has_token": true,
+      "token_ttl": 3445
+    },
+    {
+      "username": "APEX_136189",
+      "account_id": "PAAPEX1361890000011",
+      "index": 2,
+      "has_token": true,
+      "token_ttl": 3445
+    },
+    {
+      "username": "APEX_136189",
+      "account_id": "APEX13618900000118",
+      "index": 3,
+      "has_token": true,
+      "token_ttl": 3444
+    },
+    {
+      "username": "APEX_265995",
+      "account_id": "PAAPEX2659950000005",
+      "index": 1,
+      "has_token": true,
+      "token_ttl": 3445
+    },
+    {
+      "username": "APEX_266668",
+      "account_id": "PAAPEX2666680000001",
+      "index": 1,
+      "has_token": true,
+      "token_ttl": 3445
+    },
+    {
+      "username": "APEX_266668",
+      "account_id": "PAAPEX2666680000003",
+      "index": 2,
+      "has_token": true,
+      "token_ttl": 3445
+    },
+    {
+      "username": "APEX_266668",
+      "account_id": "PAAPEX2666680000004",
+      "index": 3,
+      "has_token": true,
+      "token_ttl": 3445
+    },
+    {
+      "username": "APEX_266668",
+      "account_id": "PAAPEX2666680000005",
+      "index": 4,
+      "has_token": true,
+      "token_ttl": 3445
+    },
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000001",
+      "index": 1,
+      "has_token": true,
+      "token_ttl": 3444
+    },
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000002",
+      "index": 2,
+      "has_token": true,
+      "token_ttl": 3444
+    },
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000003",
+      "index": 3,
+      "has_token": true,
+      "token_ttl": 3444
+    },
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000004",
+      "index": 4,
+      "has_token": true,
+      "token_ttl": 3444
+    },
+    {
+      "username": "APEX_272045",
+      "account_id": "PAAPEX2720450000005",
+      "index": 5,
+      "has_token": true,
+      "token_ttl": 3444
+    }
+  ]
+}

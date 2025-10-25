@@ -6,7 +6,7 @@ from app.services.orca_max_backtesting.config import PointsDistance
 from app.services.orca_max_backtesting.helper import get_exit_strategies, create_abc_config, get_abc_points, read_file_cleaned, \
     OUTPUT_DIR, export_dict_to_csv, create_exit_strategy
 from app.services.orca_max_backtesting.orca_enums import TeamWay, Contract
-from app.services.orca_max_backtesting.plot.periods_data_processor import PeriodsDataProcessor
+# from app.services.orca_max_backtesting.plot.periods_data_processor import PeriodsDataProcessor  # Commented out - missing module
 from app.utils.decorators.parallel import Parallel
 from app.utils.decorators.timing.time import time_it
 
@@ -331,9 +331,10 @@ def run_multiple_files_sequential():
 
 def export_tick_by_tick(all_data, file_name, symbol):
     # TODO: check if the files are already exported, then skip the export
-    logger.info("Exporting periodic data to CSV")
-    processor = PeriodsDataProcessor(symbol, file_name, all_data)
-    processor.process()
+    logger.info("Exporting periodic data to CSV - DISABLED (PeriodsDataProcessor missing)")
+    # processor = PeriodsDataProcessor(symbol, file_name, all_data)
+    # processor.process()
+    pass  # Functionality disabled due to missing plot module
 
 
 if __name__ == "__main__":

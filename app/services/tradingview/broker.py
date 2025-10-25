@@ -92,10 +92,13 @@ class TradingViewTradovateBroker:
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
+        # Fetch all accounts and store them
+        self.accounts: List[dict] = self.get_all_accounts()
+        
+        # Build accounts_ids list
         self.accounts_ids: List = accounts_ids
         if not accounts_ids:
-            accounts: List[dict] = self.get_all_accounts()
-            for acc in accounts:
+            for acc in self.accounts:
                 # id == 'tv' = "D17158695"
                 # name == 'ta' = "PAAPEX1361890000002"
                 self.accounts_ids.append(AccountConfig(tv_id=acc["id"], ta_id=acc["name"]))
@@ -213,20 +216,33 @@ class TradingViewTradovateBroker:
         try:
             quote_response = self.get_price_quotes(symbol=order.instrument)
             if hasattr(quote_response, 'd') and quote_response.d:
-                quote_data = quote_response.d[0]['v']
-                current_price = float(quote_data.get('lp', quote_data.get('ask', order.price)))
-                logger.info(f"Current market price for {order.instrument}: ${current_price:.2f}")
+                # Handle response structure: d can be list or dict
+                if isinstance(quote_response.d, list) and len(quote_response.d) > 0:
+                    quote_item = quote_response.d[0]
+                    if isinstance(quote_item, dict) and 'v' in quote_item:
+                        quote_data = quote_item['v']
+                        if isinstance(quote_data, dict):
+                            current_price = float(quote_data.get('lp', quote_data.get('ask', order.price)))
+                            logger.info(f"Current market price for {order.instrument}: ${current_price:.2f}")
+                        else:
+                            current_price = order.price
+                            logger.warning(f"Quote data format unexpected for {order.instrument}, using order price: ${current_price:.2f}")
+                    else:
+                        current_price = order.price
+                        logger.warning(f"Quote item structure unexpected for {order.instrument}, using order price: ${current_price:.2f}")
+                else:
+                    current_price = order.price
+                    logger.warning(f"No quote data available for {order.instrument}, using order price: ${current_price:.2f}")
             else:
                 current_price = order.price
-                logger.warning(f"Could not fetch price, using order price: ${current_price:.2f}")
+                logger.warning(f"Could not fetch current price for {order.instrument}, using order price: ${current_price:.2f}")
         except Exception as e:
             current_price = order.price
-            logger.warning(f"Error fetching price: {e}, using order price: ${current_price:.2f}")
+            logger.warning(f"Error fetching current price for {order.instrument}: {e}, using order price: ${current_price:.2f}")
         
         # Step 2: Determine order type based on price relationship
         side = order.position.lower()
         target_price = order.price
-        
         if side == "buy":
             if target_price < current_price:
                 order_type = OrderTypes.LIMIT.value
@@ -271,7 +287,14 @@ class TradingViewTradovateBroker:
         response: BrokerResponseSchema = self._make_request(
             "POST", endpoint, order_data
         )
-        return response.d.get("orderId", None)
+        # Handle response: d can be dict or list depending on API response
+        if isinstance(response.d, dict):
+            return response.d.get("orderId", None)
+        elif isinstance(response.d, list) and len(response.d) > 0 and isinstance(response.d[0], dict):
+            return response.d[0].get("orderId", None)
+        else:
+            logger.error(f"Unexpected response format when placing order: {response.d}")
+            return None
 
     def update_order(
         self,

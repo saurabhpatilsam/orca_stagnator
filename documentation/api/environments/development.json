@@ -1,0 +1,87 @@
+{
+  "id": "orca-dev-env-001",
+  "name": "ORCA - Development",
+  "values": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "TRADOVATE_BASE_URL",
+      "value": "https://tv-demo.tradovateapi.com",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "TRADOVATE_REST_URL",
+      "value": "https://demo.tradovateapi.com/v1",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "TRADOVATE_WS_URL",
+      "value": "wss://md-demo.tradovateapi.com/v1/websocket",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "SUPABASE_URL",
+      "value": "https://dcoukhtfcloqpfmijock.supabase.co",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "SUPABASE_ANON_KEY",
+      "value": "YOUR_ANON_KEY_HERE",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjb3VraHRmY2xvcXBmbWlqb2NrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MzcwMTgwMywiZXhwIjoyMDY5Mjc3ODAzfQ.iNzNrB0z64m8cINx0DeVCuAbcStWpMPx_bDos_vgO7w",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "REDIS_HOST",
+      "value": "redismanager.redis.cache.windows.net",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "REDIS_PORT",
+      "value": "6380",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "REDIS_PASSWORD",
+      "value": "YOUR_REDIS_PASSWORD_HERE",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "ACCESS_TOKEN",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "ACCOUNT_ID",
+      "value": "D17158695",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "ACCOUNT_NAME",
+      "value": "PAAPEX2666680000001",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2025-01-21T20:00:00.000Z",
+  "_postman_exported_using": "Postman/10.20.0"
+}

@@ -51,6 +51,7 @@ mcp/
 - **Vercel MCP** - Web application deployment
 - **Supabase MCP** - Database operations and queries
 - **Railway MCP** - Application hosting and deployment
+- **Postman MCP** - API testing, collection management, and documentation
 - **MCPify Ninja Trader** - Trading platform integration
 - **MCPify Google Places** - Location and search services
 
@@ -68,6 +69,8 @@ After setup, you can use commands like:
 - "Push code to GitHub"
 - "Query the database in Supabase"
 - "Deploy to Railway"
+- "Import API collection to Postman"
+- "Run API tests in Postman"
 
 ## 🔧 Customization
 

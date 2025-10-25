@@ -63,9 +63,9 @@ const DataUpload = () => {
         continue;
       }
       
-      // Check file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`File too large: ${file.name}. Maximum size is 10MB.`);
+      // Check file size (max 300MB)
+      if (file.size > 300 * 1024 * 1024) {
+        toast.error(`File too large: ${file.name}. Maximum size is 300MB.`);
         continue;
       }
       
@@ -246,7 +246,7 @@ const DataUpload = () => {
           </button>
           
           <p className="text-xs text-gray-400 mt-4">
-            Supported formats: CSV, TXT, JSON (Max 10MB)
+            Supported formats: CSV, TXT, JSON (Max 300MB)
           </p>
         </div>
       </div>
@@ -397,7 +397,7 @@ const DataUpload = () => {
               <li>CSV files should have headers in the first row</li>
               <li>TXT files should contain structured data with consistent formatting</li>
               <li>JSON files must be valid JSON format</li>
-              <li>Maximum file size is 10MB per file</li>
+              <li>Maximum file size is 300MB per file</li>
               <li>Data will be automatically processed and stored for analysis</li>
             </ul>
           </div>

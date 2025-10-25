@@ -46,6 +46,14 @@
         "--url",
         "https://agent.mcpify.ai/sse?server=a2cca30d-4210-44ef-8da9-dcf164ccc4ed"
       ]
+    },
+    "postman": {
+      "type": "http",
+      "url": "https://mcp.postman.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${POSTMAN_API_KEY}"
+      },
+      "description": "Postman MCP server for API testing and collection management"
     }
   }
 }

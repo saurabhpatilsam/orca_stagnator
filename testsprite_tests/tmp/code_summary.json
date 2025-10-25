@@ -1,0 +1,336 @@
+{
+  "tech_stack": [
+    "Python 3.11+",
+    "FastAPI",
+    "Pydantic v2",
+    "Redis (Azure Cache)",
+    "PostgreSQL/Supabase",
+    "Uvicorn",
+    "asyncio",
+    "Tradovate API",
+    "React (Frontend)",
+    "Framer Motion",
+    "TailwindCSS"
+  ],
+  "features": [
+    {
+      "name": "Hedge Algorithm API",
+      "description": "Places opposite trades on two accounts with configurable hedge distance, TP/SL, and concurrent order execution",
+      "files": [
+        "app/api/v1/trading_api_router.py",
+        "frontend/src/components/HedgingAlgo.jsx",
+        "app/services/tradingview/broker.py",
+        "app/services/orca_max/schemas.py"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Hedge Algorithm API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/v1/hedge/start": {
+            "post": {
+              "summary": "Start Hedge Algorithm",
+              "description": "Places opposite trades on two accounts. Account A enters at entry_price, Account B enters at entry_price ± hedge_distance. Orders are placed concurrently to reduce slippage.",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["account_a_name", "account_b_name", "instrument", "direction", "entry_price", "quantity", "tp_distance", "sl_distance"],
+                      "properties": {
+                        "account_a_name": {
+                          "type": "string",
+                          "description": "Name of Account A (accepts 'account_a' as alias)"
+                        },
+                        "account_b_name": {
+                          "type": "string",
+                          "description": "Name of Account B (accepts 'account_b' as alias)"
+                        },
+                        "instrument": {
+                          "type": "string",
+                          "enum": ["ES", "MES", "NQ", "MNQ", "YM", "MYM", "RTY", "M2K"],
+                          "description": "Futures instrument to trade"
+                        },
+                        "direction": {
+                          "type": "string",
+                          "enum": ["long", "short"],
+                          "description": "Direction for Account A (Account B will be opposite)"
+                        },
+                        "entry_price": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Entry price for Account A"
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Number of contracts"
+                        },
+                        "tp_distance": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Take profit distance in points"
+                        },
+                        "sl_distance": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Stop loss distance in points"
+                        },
+                        "hedge_distance": {
+                          "type": "number",
+                          "minimum": 0,
+                          "default": 0,
+                          "description": "Price difference between Account A and Account B entry"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Hedge orders placed successfully",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": ["success", "partial", "failed"]
+                          },
+                          "account_a_result": {
+                            "type": "object",
+                            "properties": {
+                              "account_name": {"type": "string"},
+                              "account_id": {"type": "string"},
+                              "order_id": {"type": "string"},
+                              "status": {"type": "string"},
+                              "error_message": {"type": "string"},
+                              "direction": {"type": "string"},
+                              "entry_price": {"type": "number"},
+                              "stop_loss": {"type": "number"},
+                              "take_profit": {"type": "number"}
+                            }
+                          },
+                          "account_b_result": {
+                            "type": "object",
+                            "properties": {
+                              "account_name": {"type": "string"},
+                              "account_id": {"type": "string"},
+                              "order_id": {"type": "string"},
+                              "status": {"type": "string"},
+                              "error_message": {"type": "string"},
+                              "direction": {"type": "string"},
+                              "entry_price": {"type": "number"},
+                              "stop_loss": {"type": "number"},
+                              "take_profit": {"type": "number"}
+                            }
+                          },
+                          "timestamp": {"type": "number"}
+                        }
+                      }
+                    }
+                  }
+                },
+                "400": {
+                  "description": "Invalid request parameters"
+                },
+                "500": {
+                  "description": "Server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Trading Accounts API",
+      "description": "Retrieve all trading accounts from Tradovate with caching support",
+      "files": [
+        "app/api/v1/trading_api_router.py",
+        "app/services/tradingview/broker.py"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/v1/trading/accounts": {
+            "get": {
+              "summary": "Get All Accounts",
+              "parameters": [
+                {
+                  "name": "use_cache",
+                  "in": "query",
+                  "schema": {"type": "boolean", "default": true}
+                },
+                {
+                  "name": "account_name",
+                  "in": "query",
+                  "schema": {"type": "string", "default": "PAAPEX2666680000001"}
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "List of accounts",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "accounts": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {"type": "string"},
+                                "id": {"type": "string"},
+                                "active": {"type": "boolean"}
+                              }
+                            }
+                          },
+                          "count": {"type": "integer"},
+                          "cached": {"type": "boolean"},
+                          "timestamp": {"type": "number"}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Positions API",
+      "description": "Get all active positions across accounts with minimal latency",
+      "files": [
+        "app/api/v1/trading_api_router.py"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/v1/trading/positions": {
+            "get": {
+              "summary": "Get All Positions",
+              "parameters": [
+                {
+                  "name": "use_cache",
+                  "in": "query",
+                  "schema": {"type": "boolean", "default": false}
+                },
+                {
+                  "name": "account_ids",
+                  "in": "query",
+                  "schema": {"type": "string"},
+                  "description": "Comma-separated account IDs"
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "List of positions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Orders API",
+      "description": "Get pending orders with HFT-optimized caching",
+      "files": [
+        "app/api/v1/trading_api_router.py"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/v1/trading/orders/pending": {
+            "get": {
+              "summary": "Get Pending Orders",
+              "responses": {
+                "200": {
+                  "description": "List of pending orders"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Balances API",
+      "description": "Get account balances with aggregated totals",
+      "files": [
+        "app/api/v1/trading_api_router.py"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/v1/trading/balances": {
+            "get": {
+              "summary": "Get Account Balances",
+              "responses": {
+                "200": {
+                  "description": "Account balances"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Health Check API",
+      "description": "System health monitoring endpoint",
+      "files": [
+        "app/api/v1/trading_api_router.py",
+        "app/main.py"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/v1/trading/health": {
+            "get": {
+              "summary": "Health Check",
+              "responses": {
+                "200": {
+                  "description": "System health status"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "key_improvements_implemented": [
+    {
+      "feature": "Instrument Tick Size Handling",
+      "description": "Frontend and backend use instrument-specific tick sizes (ES/MES/NQ/MNQ: 0.25, YM/MYM: 1.0, RTY/M2K: 0.10) for price validation and rounding",
+      "files": [
+        "frontend/src/components/HedgingAlgo.jsx",
+        "app/api/v1/trading_api_router.py"
+      ]
+    },
+    {
+      "feature": "Field Aliasing",
+      "description": "API accepts both 'account_a_name' and 'account_a' field names using validation_alias for backward compatibility",
+      "files": [
+        "app/api/v1/trading_api_router.py"
+      ]
+    },
+    {
+      "feature": "Concurrent Order Placement",
+      "description": "Orders on both accounts are placed concurrently using asyncio.gather() to reduce latency and slippage risk",
+      "files": [
+        "app/api/v1/trading_api_router.py"
+      ]
+    }
+  ]
+}

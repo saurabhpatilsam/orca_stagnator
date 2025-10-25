@@ -1,0 +1,258 @@
+{
+  "info": {
+    "name": "ORCA - Redis Operations",
+    "description": "Redis cache operations for token management and data storage. Note: These are documented as pseudo-HTTP operations for reference. Actual Redis operations use redis-py client library.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "orca-redis-ops-004",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "REDIS_HOST",
+      "value": "redismanager.redis.cache.windows.net",
+      "type": "string",
+      "description": "Redis server host"
+    },
+    {
+      "key": "REDIS_PORT",
+      "value": "6380",
+      "type": "string",
+      "description": "Redis SSL port"
+    },
+    {
+      "key": "REDIS_PASSWORD",
+      "value": "",
+      "type": "string",
+      "description": "Redis password (from environment)"
+    }
+  ],
+  "item": [
+    {
+      "name": "Connection Info",
+      "item": [
+        {
+          "name": "Redis Connection Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{REDIS_HOST}}:{{REDIS_PORT}}",
+              "protocol": "https",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}"
+            },
+            "description": "**Redis Connection Configuration**\n\n**Host:** redismanager.redis.cache.windows.net\n**Port:** 6380 (SSL)\n**SSL:** Required (TLS enabled)\n**Password:** From environment variable REDIS_PASSWORD\n\n**Python Connection Example:**\n```python\nimport redis\n\nredis_client = redis.Redis(\n    host='redismanager.redis.cache.windows.net',\n    port=6380,\n    password=os.getenv('REDIS_PASSWORD'),\n    ssl=True,\n    decode_responses=True\n)\n```\n\n**Deno Connection Example:**\n```typescript\nimport { connect } from 'https://deno.land/x/redis@v0.31.0/mod.ts';\n\nconst redis = await connect({\n  hostname: 'redismanager.redis.cache.windows.net',\n  port: 6380,\n  password: Deno.env.get('REDIS_PASSWORD'),\n  tls: true,\n});\n```\n\n**Connection Pool:**\n- Max connections: 10\n- Connection timeout: 5 seconds\n- Socket keepalive: Enabled"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Token Management",
+      "item": [
+        {
+          "name": "GET - Retrieve Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/token:APEX_266668",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["token:APEX_266668"]
+            },
+            "description": "**Redis Command:** `GET token:{ACCOUNT_NAME}`\n\n**Python Example:**\n```python\ntoken = redis_client.get('token:APEX_266668')\n```\n\n**Returns:** JWT access token string\n\n**Token Keys:**\n- token:APEX_266668 (4 accounts)\n- token:APEX_272045 (5 accounts)\n- token:APEX_136189 (3 accounts)\n- token:APEX_265995 (1 account)\n- token:PAAPEX2666680000001\n- token:PAAPEX2666680000003\n- token:PAAPEX2666680000004\n- token:PAAPEX2666680000005\n\n**TTL:** ~5 hours (18000 seconds)\n**Auto-Refresh:** Managed by token_generator_and_redis_manager.py"
+          },
+          "response": []
+        },
+        {
+          "name": "SET - Store Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"token:APEX_266668\",\n  \"value\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"ttl\": 18000\n}"
+            },
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/SET",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["SET"]
+            },
+            "description": "**Redis Command:** `SETEX token:{ACCOUNT_NAME} {TTL} {TOKEN}`\n\n**Python Example:**\n```python\nredis_client.setex(\n    'token:APEX_266668',\n    18000,  # 5 hours\n    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'\n)\n```\n\n**Parameters:**\n- key: token:{ACCOUNT_NAME}\n- value: JWT token string\n- ttl: Time to live in seconds (default: 18000 = 5 hours)\n\n**Managed By:** token_generator_and_redis_manager.py"
+          },
+          "response": []
+        },
+        {
+          "name": "TTL - Check Token Expiration",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/TTL/token:APEX_266668",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["TTL", "token:APEX_266668"]
+            },
+            "description": "**Redis Command:** `TTL token:{ACCOUNT_NAME}`\n\n**Python Example:**\n```python\nttl = redis_client.ttl('token:APEX_266668')\nprint(f'Token expires in {ttl} seconds')\n```\n\n**Returns:** \n- Positive number: Seconds until expiration\n- -1: Key exists but has no expiration\n- -2: Key does not exist"
+          },
+          "response": []
+        },
+        {
+          "name": "EXISTS - Check Token Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/EXISTS/token:APEX_266668",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["EXISTS", "token:APEX_266668"]
+            },
+            "description": "**Redis Command:** `EXISTS token:{ACCOUNT_NAME}`\n\n**Python Example:**\n```python\nexists = redis_client.exists('token:APEX_266668')\nif exists:\n    print('Token exists')\n```\n\n**Returns:** \n- 1: Key exists\n- 0: Key does not exist"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cache Operations",
+      "item": [
+        {
+          "name": "GET - HFT Cache Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/hft:accounts:PAAPEX2666680000001",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["hft:accounts:PAAPEX2666680000001"]
+            },
+            "description": "**Redis Command:** `GET hft:{endpoint}:{params}`\n\n**Python Example:**\n```python\ncache_data = redis_client.get('hft:accounts:PAAPEX2666680000001')\nif cache_data:\n    data = json.loads(cache_data)\n```\n\n**HFT Cache Keys:**\n- hft:accounts:{account_name} - Account list (TTL: 300s)\n- hft:positions:{account_name}:{ids} - Positions (TTL: 1s)\n- hft:orders:pending:{account_name}:{ids} - Orders (TTL: 1s)\n- hft:balances:{account_name}:{ids} - Balances (TTL: 2s)\n\n**Purpose:** High-frequency trading cache for fast API responses"
+          },
+          "response": []
+        },
+        {
+          "name": "SET - Cache API Response",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"hft:accounts:PAAPEX2666680000001\",\n  \"value\": \"{\\\"accounts\\\":[...],\\\"count\\\":4}\",\n  \"ttl\": 300\n}"
+            },
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/SETEX",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["SETEX"]
+            },
+            "description": "**Redis Command:** `SETEX hft:{endpoint}:{params} {TTL} {JSON_DATA}`\n\n**Python Example:**\n```python\nimport json\n\ndata = {\"accounts\": [...], \"count\": 4}\nredis_client.setex(\n    'hft:accounts:PAAPEX2666680000001',\n    300,  # 5 minutes\n    json.dumps(data)\n)\n```\n\n**TTL Guidelines:**\n- Accounts: 300s (5 minutes)\n- Positions: 1s (real-time)\n- Orders: 1s (real-time)\n- Balances: 2s (near real-time)"
+          },
+          "response": []
+        },
+        {
+          "name": "DEL - Clear Cache",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/hft:accounts:*",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["hft:accounts:*"]
+            },
+            "description": "**Redis Command:** `DEL {key}` or `SCAN + DEL` for pattern\n\n**Python Example:**\n```python\n# Delete single key\nredis_client.delete('hft:accounts:PAAPEX2666680000001')\n\n# Delete by pattern\nfor key in redis_client.scan_iter('hft:accounts:*'):\n    redis_client.delete(key)\n```\n\n**Common Patterns:**\n- hft:* - All HFT cache\n- hft:accounts:* - All account caches\n- hft:positions:* - All position caches\n- token:* - All tokens"
+          },
+          "response": []
+        },
+        {
+          "name": "KEYS - List All Keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/KEYS/*",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["KEYS", "*"]
+            },
+            "description": "**Redis Command:** `KEYS {pattern}` (use SCAN in production)\n\n**Python Example:**\n```python\n# Development only (blocks Redis)\nkeys = redis_client.keys('token:*')\n\n# Production (non-blocking)\nfor key in redis_client.scan_iter('token:*'):\n    print(key)\n```\n\n**Warning:** KEYS command blocks Redis. Use SCAN in production!\n\n**Common Patterns:**\n- * - All keys\n- token:* - All tokens\n- hft:* - All HFT cache\n- hft:accounts:* - Account caches"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Price Data Storage",
+      "item": [
+        {
+          "name": "GET - Latest Price",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/price:MNQZ5:latest",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["price:MNQZ5:latest"]
+            },
+            "description": "**Redis Command:** `GET price:{symbol}:latest`\n\n**Python Example:**\n```python\nprice_data = redis_client.get('price:MNQZ5:latest')\nif price_data:\n    data = json.loads(price_data)\n    print(f\"Last: {data['Last']}, Bid: {data['Bid']}, Ask: {data['Ask']}\")\n```\n\n**Data Format:**\n```json\n{\n  \"Last\": 21000.25,\n  \"Bid\": 21000.00,\n  \"Ask\": 21000.50,\n  \"Volume\": 12345,\n  \"Timestamp\": 1737488400000\n}\n```\n\n**Purpose:** Real-time price caching for trading bots"
+          },
+          "response": []
+        },
+        {
+          "name": "SET - Store Latest Price",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"price:MNQZ5:latest\",\n  \"value\": \"{\\\"Last\\\":21000.25,\\\"Bid\\\":21000.00,\\\"Ask\\\":21000.50}\",\n  \"ttl\": 5\n}"
+            },
+            "url": {
+              "raw": "redis://{{REDIS_HOST}}:{{REDIS_PORT}}/SETEX",
+              "protocol": "redis",
+              "host": ["{{REDIS_HOST}}"],
+              "port": "{{REDIS_PORT}}",
+              "path": ["SETEX"]
+            },
+            "description": "**Redis Command:** `SETEX price:{symbol}:latest {TTL} {JSON_DATA}`\n\n**Python Example:**\n```python\nimport json\nimport time\n\nprice_data = {\n    \"Last\": 21000.25,\n    \"Bid\": 21000.00,\n    \"Ask\": 21000.50,\n    \"Volume\": 12345,\n    \"Timestamp\": int(time.time() * 1000)\n}\n\nredis_client.setex(\n    'price:MNQZ5:latest',\n    5,  # 5 seconds TTL\n    json.dumps(price_data)\n)\n```\n\n**TTL:** 5 seconds (real-time price data)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Utility Scripts",
+      "item": [
+        {
+          "name": "Python Scripts Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "file:///check_all_redis.py",
+              "protocol": "file",
+              "host": [""],
+              "path": ["", "", "check_all_redis.py"]
+            },
+            "description": "**Redis Utility Scripts:**\n\n1. **check_all_redis.py**\n   - Check all Redis keys and values\n   - Display token status and TTL\n   - Usage: `python check_all_redis.py`\n\n2. **get_all_accounts_from_redis.py**\n   - Fetch all account tokens from Redis\n   - Verify account connectivity\n   - Usage: `python get_all_accounts_from_redis.py`\n\n3. **token_generator_and_redis_manager.py**\n   - Main token management daemon\n   - Auto-refresh tokens every hour\n   - Store in Redis with 5-hour TTL\n   - Usage: `python token_generator_and_redis_manager.py`\n\n4. **sync_tokens_to_supabase.py**\n   - Sync Redis tokens to Supabase\n   - Backup token storage\n   - Usage: `python sync_tokens_to_supabase.py`\n\n**Connection Helper:**\n```python\nfrom app.services.orca_redis.client import get_redis_client\n\nredis_client = get_redis_client()\nif redis_client:\n    # Use redis_client for operations\n    pass\n```"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

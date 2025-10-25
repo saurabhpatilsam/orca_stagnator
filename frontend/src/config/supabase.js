@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Using the cloud Supabase instance for authentication
-const supabaseUrl = 'https://aaxiaqzrlzqypmxrlqsy.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFheGlhcXpybHpxeXBteHJscXN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg1NjIxMTQsImV4cCI6MjA0NDEzODExNH0.vfxw6W_Bd0wLNsQKDYcg_xdM1TL8-0BbyF8ikJWxnSE';
+// Using environment variables for Supabase configuration
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://aaxiaqzrlzqypmxrlqsy.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFheGlhcXpybHpxeXBteHJscXN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg1NjIxMTQsImV4cCI6MjA0NDEzODExNH0.vfxw6W_Bd0wLNsQKDYcg_xdM1TL8-0BbyF8ikJWxnSE';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "TC001",
+    "title": "validate_hedge_start_accepts_account_a_alias",
+    "description": "Test the /api/v1/hedge/start endpoint to ensure it accepts both 'account_a_name' and 'account_a' as valid fields for Account A without error, verifying backward compatibility with field aliasing."
+  },
+  {
+    "id": "TC002",
+    "title": "validate_hedge_start_input_validation",
+    "description": "Test the /api/v1/hedge/start endpoint to verify input validation rejects negative quantities, zero or negative prices, invalid directions (only 'long' or 'short' allowed), and identical account names, ensuring robust request validation."
+  },
+  {
+    "id": "TC003",
+    "title": "validate_concurrent_order_placement_on_hedge_start",
+    "description": "Test that the /api/v1/hedge/start endpoint places orders concurrently on both accounts using asyncio.gather(), ensuring reduced latency and slippage risk with correct token scopes for each account."
+  },
+  {
+    "id": "TC004",
+    "title": "validate_price_rounding_to_instrument_tick_size",
+    "description": "Test that all price inputs (entry price, take profit, stop loss) sent to the broker API from /api/v1/hedge/start are correctly rounded according to the instrument-specific tick sizes (e.g., 0.25 for ES/MES/NQ/MNQ, 1.0 for YM/MYM, 0.10 for RTY/M2K)."
+  },
+  {
+    "id": "TC005",
+    "title": "validate_trading_accounts_api_cache_support",
+    "description": "Test the /api/v1/trading/accounts GET endpoint to verify it returns a list of trading accounts with correct caching behavior when the 'use_cache' query parameter is true or false."
+  },
+  {
+    "id": "TC006",
+    "title": "validate_positions_api_minimal_latency_response",
+    "description": "Test the /api/v1/trading/positions GET endpoint to ensure it returns active positions across accounts with minimal latency and supports filtering by comma-separated account IDs."
+  },
+  {
+    "id": "TC007",
+    "title": "validate_pending_orders_api_response",
+    "description": "Test the /api/v1/trading/orders/pending GET endpoint to verify it returns the list of pending orders with high-frequency trading optimized caching."
+  },
+  {
+    "id": "TC008",
+    "title": "validate_account_balances_api_response",
+    "description": "Test the /api/v1/trading/balances GET endpoint to ensure it returns accurate account balances including aggregated totals."
+  },
+  {
+    "id": "TC009",
+    "title": "validate_health_check_api_response",
+    "description": "Test the /api/v1/trading/health GET endpoint to verify it returns the system health status successfully without failure."
+  }
+]

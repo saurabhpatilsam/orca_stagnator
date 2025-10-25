@@ -25,4 +25,4 @@ COPY . .
 EXPOSE 8000
 
 # Run the application
-CMD ["python", "run.py"]
+CMD ["python", "simple_main.py"]

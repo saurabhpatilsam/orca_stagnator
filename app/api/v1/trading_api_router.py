@@ -12,17 +12,20 @@ Features:
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Query, Depends
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from loguru import logger
 import time
+import asyncio
 from datetime import datetime, timedelta
 
 from app.services.orca_redis.client import get_redis_client
 from app.services.tradingview.broker import TradingViewTradovateBroker
+from app.services.orca_max.schemas import Order
 import json
 
-# Create router
+# Create routers
 trading_router = APIRouter(prefix="/trading", tags=["HFT Trading API"])
+hedge_router = APIRouter(tags=["Hedge Algorithm"])  # Separate router without /trading prefix
 
 # Cache TTL settings (in seconds)
 CACHE_TTL_ACCOUNTS = 300  # 5 minutes - accounts don't change often
@@ -117,8 +120,75 @@ class BalanceListResponse(BaseModel):
 
 
 # ============================================================================
+# Hedge Algorithm Models
+# ============================================================================
+
+class HedgeStartRequest(BaseModel):
+    """Request model for starting hedge algorithm"""
+    # Accept both account_a_name and account_a for backward compatibility
+    account_a_name: str = Field(validation_alias="account_a")
+    account_b_name: str = Field(validation_alias="account_b")
+    instrument: str
+    direction: str  # "long" or "short" for Account A
+    entry_price: float
+    quantity: int
+    tp_distance: float
+    sl_distance: float
+    hedge_distance: float = 0.0
+    
+    model_config = ConfigDict(
+        populate_by_name=True,  # Allow both field name and validation_alias
+        protected_namespaces=()  # Disable protected namespace warnings
+    )
+
+class HedgeOrderResult(BaseModel):
+    """Result of a single hedge order"""
+    account_name: str
+    account_id: str
+    order_id: Optional[str]
+    status: str  # "success" or "failed"
+    error_message: Optional[str]
+    direction: str  # "long" or "short"
+    entry_price: float
+    stop_loss: float
+    take_profit: float
+
+class HedgeStartResponse(BaseModel):
+    """Response model for hedge algorithm start"""
+    status: str  # "success", "partial", or "failed"
+    account_a_result: HedgeOrderResult
+    account_b_result: HedgeOrderResult
+    timestamp: float
+
+
+# ============================================================================
 # Helper Functions
 # ============================================================================
+
+# Instrument tick sizes (minimum price increment)
+INSTRUMENT_TICK_SIZES = {
+    "NQ": 0.25,      # E-mini Nasdaq
+    "MNQ": 0.25,     # Micro E-mini Nasdaq
+    "ES": 0.25,      # E-mini S&P 500
+    "MES": 0.25,     # Micro E-mini S&P 500
+    "YM": 1.0,       # E-mini Dow
+    "MYM": 1.0,      # Micro E-mini Dow
+    "RTY": 0.10,     # E-mini Russell 2000
+    "M2K": 0.10,     # Micro E-mini Russell 2000
+    # Add more instruments as needed
+}
+
+def get_tick_size(instrument: str) -> float:
+    """Get tick size for an instrument. Returns 0.25 as default for futures."""
+    # Extract base symbol (remove contract month codes like Z5, H6, etc.)
+    base_symbol = instrument.rstrip("0123456789FGHJKMNQUVXZ")
+    return INSTRUMENT_TICK_SIZES.get(base_symbol, 0.25)
+
+def round_to_tick(price: float, tick_size: float) -> float:
+    """Round price to the nearest tick size."""
+    if tick_size <= 0:
+        return price
+    return round(price / tick_size) * tick_size
 
 def get_broker_instance(account_name: str = "PAAPEX2666680000001"):
     """Get broker instance with Redis token"""
@@ -265,14 +335,15 @@ async def get_all_positions(
             accounts = broker.get_all_accounts()
             target_account_ids = [acc["id"] for acc in accounts]
         
-        # Fetch positions for each account
-        all_positions = []
-        for acc_id in target_account_ids:
+        # Fetch positions for each account CONCURRENTLY (HFT optimization)
+        async def fetch_positions_for_account(acc_id: str):
+            """Fetch positions for a single account"""
             try:
-                positions_raw = broker.get_positions(acc_id)
+                positions_raw = await asyncio.to_thread(broker.get_positions, acc_id)
+                account_positions = []
                 if positions_raw:
                     for pos in positions_raw:
-                        all_positions.append(
+                        account_positions.append(
                             PositionInfo(
                                 id=pos.id,
                                 account_id=acc_id,
@@ -283,9 +354,19 @@ async def get_all_positions(
                                 unrealized_pnl=pos.unrealizedPl
                             )
                         )
+                return account_positions
             except Exception as e:
                 logger.warning(f"Error fetching positions for account {acc_id}: {e}")
-                continue
+                return []
+        
+        # Execute all fetches concurrently for maximum speed
+        position_results = await asyncio.gather(
+            *[fetch_positions_for_account(acc_id) for acc_id in target_account_ids],
+            return_exceptions=False
+        )
+        
+        # Flatten results
+        all_positions = [pos for positions in position_results for pos in positions]
         
         response_data = {
             "positions": [pos.dict() for pos in all_positions],
@@ -343,18 +424,19 @@ async def get_pending_orders(
             accounts = broker.get_all_accounts()
             target_account_ids = [acc["id"] for acc in accounts]
         
-        # Fetch orders for each account
-        all_orders = []
+        # Fetch orders for each account CONCURRENTLY (HFT optimization)
         pending_statuses = ["Working", "Pending", "Queued"]
         
-        for acc_id in target_account_ids:
+        async def fetch_orders_for_account(acc_id: str):
+            """Fetch orders for a single account"""
             try:
-                orders_raw = broker.get_orders(acc_id)
+                orders_raw = await asyncio.to_thread(broker.get_orders, acc_id)
+                account_orders = []
                 if orders_raw:
                     for order in orders_raw:
                         # Filter only pending orders
                         if order.status in pending_statuses:
-                            all_orders.append(
+                            account_orders.append(
                                 OrderInfo(
                                     order_id=str(order.id),
                                     account_id=acc_id,
@@ -366,9 +448,19 @@ async def get_pending_orders(
                                     order_type=order.orderType
                                 )
                             )
+                return account_orders
             except Exception as e:
                 logger.warning(f"Error fetching orders for account {acc_id}: {e}")
-                continue
+                return []
+        
+        # Execute all fetches concurrently for maximum speed
+        order_results = await asyncio.gather(
+            *[fetch_orders_for_account(acc_id) for acc_id in target_account_ids],
+            return_exceptions=False
+        )
+        
+        # Flatten results
+        all_orders = [order for orders in order_results for order in orders]
         
         response_data = {
             "orders": [order.dict() for order in all_orders],
@@ -492,13 +584,11 @@ async def get_account_balances(
             account_map = {acc["id"]: acc["name"] for acc in all_accounts}
             target_account_ids = list(account_map.keys())
         
-        # Fetch balance for each account
-        all_balances = []
-        total_balance = 0.0
-        
-        for acc_id in target_account_ids:
+        # Fetch balance for each account CONCURRENTLY (HFT optimization)
+        async def fetch_balance_for_account(acc_id: str):
+            """Fetch balance for a single account"""
             try:
-                state = broker.get_account_state(acc_id)
+                state = await asyncio.to_thread(broker.get_account_state, acc_id)
                 if state:
                     balance_info = BalanceInfo(
                         account_id=acc_id,
@@ -509,11 +599,21 @@ async def get_account_balances(
                         open_pl=state.openRealizedPl,
                         realized_pl=state.realizedPl
                     )
-                    all_balances.append(balance_info)
-                    total_balance += state.netLiquidatingValue
+                    return balance_info
+                return None
             except Exception as e:
                 logger.warning(f"Error fetching balance for account {acc_id}: {e}")
-                continue
+                return None
+        
+        # Execute all fetches concurrently for maximum speed
+        balance_results = await asyncio.gather(
+            *[fetch_balance_for_account(acc_id) for acc_id in target_account_ids],
+            return_exceptions=False
+        )
+        
+        # Filter out None results and calculate total
+        all_balances = [bal for bal in balance_results if bal is not None]
+        total_balance = sum(bal.net_liquidating_value for bal in all_balances)
         
         response_data = {
             "balances": [bal.dict() for bal in all_balances],
@@ -638,3 +738,275 @@ async def health_check():
     health_status["response_time_ms"] = elapsed_ms
     
     return health_status
+
+
+# ============================================================================
+# Hedge Algorithm Endpoint
+# ============================================================================
+
+@hedge_router.post("/hedge/start", response_model=HedgeStartResponse)
+async def start_hedge_algorithm(request: HedgeStartRequest):
+    """
+    Start a hedge algorithm that places opposite trades on two accounts.
+    
+    The algorithm:
+    1. Places a trade on Account A at the specified entry price
+    2. Places an opposite trade on Account B with hedge distance applied
+    3. Sets take profit and stop loss for both accounts
+    
+    Hedge Distance Logic:
+    - If hedge_distance = 0: Both accounts enter at same price
+    - If hedge_distance > 0 and Account A is LONG:
+        - Account A enters LONG at entry_price
+        - Account B enters SHORT at entry_price - hedge_distance
+    - If hedge_distance > 0 and Account A is SHORT:
+        - Account A enters SHORT at entry_price
+        - Account B enters LONG at entry_price + hedge_distance
+    
+    Returns detailed results for both order placements.
+    """
+    start_time = time.time()
+    
+    try:
+        # Log incoming request
+        logger.info(f"Starting hedge algorithm: {request.dict()}")
+        
+        # Step 1: Normalize and validate inputs
+        direction = request.direction.lower()
+        
+        # Validate direction
+        if direction not in ["long", "short"]:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid direction: '{request.direction}'. Must be 'long' or 'short'"
+            )
+        
+        # Validate positive values
+        if request.quantity <= 0:
+            raise HTTPException(status_code=400, detail="Quantity must be greater than 0")
+        if request.entry_price <= 0:
+            raise HTTPException(status_code=400, detail="Entry price must be greater than 0")
+        if request.tp_distance < 0:
+            raise HTTPException(status_code=400, detail="TP distance cannot be negative")
+        if request.sl_distance < 0:
+            raise HTTPException(status_code=400, detail="SL distance cannot be negative")
+        if request.hedge_distance < 0:
+            raise HTTPException(status_code=400, detail="Hedge distance cannot be negative")
+        
+        # Prevent same account for both A and B
+        if request.account_a_name == request.account_b_name:
+            raise HTTPException(
+                status_code=400, 
+                detail="Account A and Account B must be different accounts"
+            )
+        
+        # Step 2: Initialize separate broker instances for each account
+        broker_a = get_broker_instance(request.account_a_name)
+        broker_b = get_broker_instance(request.account_b_name)
+        
+        # Get all accounts to validate and get IDs (using broker_a is sufficient for validation)
+        accounts = broker_a.get_all_accounts()
+        if not accounts:
+            raise HTTPException(status_code=503, detail="Failed to fetch accounts")
+        
+        # Create account mapping
+        account_map = {acc["name"]: acc["id"] for acc in accounts}
+        
+        # Validate both accounts exist
+        if request.account_a_name not in account_map:
+            raise HTTPException(status_code=400, detail=f"Account not found: {request.account_a_name}")
+        if request.account_b_name not in account_map:
+            raise HTTPException(status_code=400, detail=f"Account not found: {request.account_b_name}")
+        
+        # Get account IDs
+        account_a_id = account_map[request.account_a_name]
+        account_b_id = account_map[request.account_b_name]
+        
+        logger.info(f"Account A: {request.account_a_name} (ID: {account_a_id})")
+        logger.info(f"Account B: {request.account_b_name} (ID: {account_b_id})")
+        
+        # Step 3: Calculate entry prices
+        account_a_entry = request.entry_price
+        
+        # Calculate Account B entry based on hedge distance
+        if direction == "long":
+            account_b_entry = request.entry_price - request.hedge_distance
+        else:  # short
+            account_b_entry = request.entry_price + request.hedge_distance
+        
+        # Validate Account B entry is positive
+        if account_b_entry <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Computed Account B entry price ({account_b_entry}) is not positive. "
+                       f"Adjust entry_price or hedge_distance."
+            )
+        
+        logger.info(f"Entry prices - Account A: {account_a_entry}, Account B: {account_b_entry}")
+        
+        # Step 4: Calculate TP/SL for Account A
+        if direction == "long":
+            account_a_tp = account_a_entry + request.tp_distance
+            account_a_sl = account_a_entry - request.sl_distance
+        else:  # short
+            account_a_tp = account_a_entry - request.tp_distance
+            account_a_sl = account_a_entry + request.sl_distance
+        
+        # Step 5: Calculate TP/SL for Account B (opposite direction)
+        account_b_direction = "short" if direction == "long" else "long"
+        
+        if account_b_direction == "long":
+            account_b_tp = account_b_entry + request.tp_distance
+            account_b_sl = account_b_entry - request.sl_distance
+        else:  # short
+            account_b_tp = account_b_entry - request.tp_distance
+            account_b_sl = account_b_entry + request.sl_distance
+        
+        # Step 6: Round all prices to instrument's tick size
+        tick_size = get_tick_size(request.instrument)
+        logger.info(f"Using tick size {tick_size} for instrument {request.instrument}")
+        
+        account_a_entry = round_to_tick(account_a_entry, tick_size)
+        account_a_tp = round_to_tick(account_a_tp, tick_size)
+        account_a_sl = round_to_tick(account_a_sl, tick_size)
+        
+        account_b_entry = round_to_tick(account_b_entry, tick_size)
+        account_b_tp = round_to_tick(account_b_tp, tick_size)
+        account_b_sl = round_to_tick(account_b_sl, tick_size)
+        
+        logger.info(f"Account A ({direction}): Entry={account_a_entry}, TP={account_a_tp}, SL={account_a_sl}")
+        logger.info(f"Account B ({account_b_direction}): Entry={account_b_entry}, TP={account_b_tp}, SL={account_b_sl}")
+        
+        # Step 7: Create Order objects
+        order_a = Order(
+            instrument=request.instrument,
+            quantity=request.quantity,
+            price=account_a_entry,
+            position="buy" if direction == "long" else "sell",
+            order_type="limit",
+            stop_loss=account_a_sl,
+            take_profit=account_a_tp,
+            timestamp=datetime.now(),
+            order_dict_all={}
+        )
+        
+        order_b = Order(
+            instrument=request.instrument,
+            quantity=request.quantity,
+            price=account_b_entry,
+            position="sell" if direction == "long" else "buy",  # Opposite of Account A
+            order_type="limit",
+            stop_loss=account_b_sl,
+            take_profit=account_b_tp,
+            timestamp=datetime.now(),
+            order_dict_all={}
+        )
+        
+        # Step 8: Place orders concurrently to reduce latency and slippage risk
+        order_a_id = None
+        order_a_error = None
+        order_b_id = None
+        order_b_error = None
+        
+        # Define async wrapper functions for concurrent execution
+        async def place_order_a():
+            """Place order on Account A"""
+            try:
+                logger.info(f"Placing order on Account A ({request.account_a_name})...")
+                order_id = await asyncio.to_thread(
+                    broker_a.place_order, 
+                    order=order_a, 
+                    account_id=account_a_id
+                )
+                if order_id:
+                    logger.info(f"Account A order placed successfully: {order_id}")
+                    return order_id, None
+                else:
+                    error = "Order placement returned None"
+                    logger.error(f"Account A order failed: {error}")
+                    return None, error
+            except Exception as e:
+                logger.error(f"Account A order failed with exception: {e}")
+                return None, str(e)
+        
+        async def place_order_b():
+            """Place order on Account B"""
+            try:
+                logger.info(f"Placing order on Account B ({request.account_b_name})...")
+                order_id = await asyncio.to_thread(
+                    broker_b.place_order, 
+                    order=order_b, 
+                    account_id=account_b_id
+                )
+                if order_id:
+                    logger.info(f"Account B order placed successfully: {order_id}")
+                    return order_id, None
+                else:
+                    error = "Order placement returned None"
+                    logger.error(f"Account B order failed: {error}")
+                    return None, error
+            except Exception as e:
+                logger.error(f"Account B order failed with exception: {e}")
+                return None, str(e)
+        
+        # Execute both order placements concurrently
+        logger.info("Placing both orders concurrently...")
+        results = await asyncio.gather(
+            place_order_a(),
+            place_order_b(),
+            return_exceptions=False  # Exceptions are handled within wrapper functions
+        )
+        
+        # Extract results
+        order_a_id, order_a_error = results[0]
+        order_b_id, order_b_error = results[1]
+        
+        # Step 9: Build response objects
+        account_a_result = HedgeOrderResult(
+            account_name=request.account_a_name,
+            account_id=account_a_id,
+            order_id=order_a_id,
+            status="success" if order_a_id else "failed",
+            error_message=order_a_error,
+            direction=direction,
+            entry_price=account_a_entry,
+            stop_loss=account_a_sl,
+            take_profit=account_a_tp
+        )
+        
+        account_b_result = HedgeOrderResult(
+            account_name=request.account_b_name,
+            account_id=account_b_id,
+            order_id=order_b_id,
+            status="success" if order_b_id else "failed",
+            error_message=order_b_error,
+            direction=account_b_direction,
+            entry_price=account_b_entry,
+            stop_loss=account_b_sl,
+            take_profit=account_b_tp
+        )
+        
+        # Step 10: Determine overall status
+        if order_a_id and order_b_id:
+            overall_status = "success"
+        elif order_a_id or order_b_id:
+            overall_status = "partial"
+        else:
+            overall_status = "failed"
+        
+        # Step 11: Return response
+        elapsed_ms = (time.time() - start_time) * 1000
+        logger.info(f"Hedge algorithm completed in {elapsed_ms:.2f}ms with status: {overall_status}")
+        
+        return HedgeStartResponse(
+            status=overall_status,
+            account_a_result=account_a_result,
+            account_b_result=account_b_result,
+            timestamp=time.time()
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Hedge algorithm failed with unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

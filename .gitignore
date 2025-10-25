@@ -52,3 +52,19 @@ place_*.py
 
 # Archived
 archived/
+.vercel
+
+# Environment files with secrets
+.env.configured
+*.env*
+
+# Files with API keys
+HEDGE_ALGORITHM_VERIFICATION_SUMMARY.md
+mcp/POSTMAN_CONFIGURED_COMPLETE.md
+
+# Credentials
+credentials.json
+*credentials*
+
+# Redis credentials
+redis_accounts.json

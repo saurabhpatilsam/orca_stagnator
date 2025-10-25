@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, getSession } from '../config/supabase';
+import { authAPI } from '../config/api';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext({});
@@ -12,74 +12,67 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    getSession().then((session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Check if user is already logged in
+    const checkAuth = () => {
+      try {
+        const currentUser = authAPI.getCurrentUser();
+        const token = authAPI.getToken();
+        
+        if (currentUser && token) {
+          setUser(currentUser);
+          setSession({ user: currentUser, access_token: token });
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        authAPI.signOut();
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    checkAuth();
   }, []);
 
   const signIn = async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const response = await authAPI.signIn(email, password);
       
-      if (error) throw error;
-      
-      // Check if MFA is required
-      if (data?.user?.factors?.length > 0) {
-        return { requiresMFA: true, factors: data.user.factors };
-      }
+      setUser(response.user);
+      setSession({ user: response.user, access_token: response.access_token });
       
       toast.success('Successfully signed in!');
-      return { data, error: null };
+      return { data: response, error: null };
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Sign in failed');
       return { data: null, error };
     }
   };
 
   const signUp = async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
-        }
-      });
+      const response = await authAPI.signUp(email, password);
       
-      if (error) throw error;
+      setUser(response.user);
+      setSession({ user: response.user, access_token: response.access_token });
       
-      toast.success('Check your email for confirmation!');
-      return { data, error: null };
+      toast.success('Account created successfully!');
+      return { data: response, error: null };
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Sign up failed');
       return { data: null, error };
     }
   };
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      authAPI.signOut();
+      setUser(null);
+      setSession(null);
       
       toast.success('Successfully signed out!');
       window.location.href = '/';
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Sign out failed');
     }
   };
 

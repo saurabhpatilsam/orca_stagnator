@@ -8,7 +8,7 @@ from datetime import datetime
 import json
 
 # Import routers
-from app.api.v1.trading_api_router import trading_router
+from app.api.v1.trading_api_router import trading_router, hedge_router
 from app.api.v1.orca_max_router import max_router
 
 app = FastAPI(
@@ -28,6 +28,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(trading_router, prefix="/api/v1", tags=["HFT Trading"])
+app.include_router(hedge_router, prefix="/api/v1", tags=["Hedge Algorithm"])  # No /trading prefix for hedge endpoint
 app.include_router(max_router, prefix="/api/v1", tags=["Max Trading Bot"])
 
 

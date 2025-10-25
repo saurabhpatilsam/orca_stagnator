@@ -1,0 +1,482 @@
+{
+  "info": {
+    "name": "ORCA - Tradovate Broker APIs",
+    "description": "Tradovate Trading API endpoints for authentication, orders, positions, and market data",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "orca-tradovate-apis-002",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "TRADOVATE_BASE_URL",
+      "value": "https://tv-demo.tradovateapi.com",
+      "type": "string",
+      "description": "Demo: https://tv-demo.tradovateapi.com | Live: https://tv-live.tradovateapi.com"
+    },
+    {
+      "key": "TRADOVATE_REST_URL",
+      "value": "https://demo.tradovateapi.com/v1",
+      "type": "string",
+      "description": "REST API base URL"
+    },
+    {
+      "key": "TRADOVATE_WS_URL",
+      "value": "wss://md-demo.tradovateapi.com/v1/websocket",
+      "type": "string",
+      "description": "WebSocket URL for market data"
+    },
+    {
+      "key": "ACCOUNT_ID",
+      "value": "D17158695",
+      "type": "string",
+      "description": "Trading account ID"
+    },
+    {
+      "key": "ACCESS_TOKEN",
+      "value": "",
+      "type": "string",
+      "description": "JWT access token from Redis or auth response"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{ACCESS_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Authorize (Trading View)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/authorize?locale=en",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["authorize"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Authorize Trading View integration. Returns access token for TV platform."
+          },
+          "response": []
+        },
+        {
+          "name": "Renew Access Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{TRADOVATE_REST_URL}}/auth/renewaccesstoken",
+              "host": ["{{TRADOVATE_REST_URL}}"],
+              "path": ["auth", "renewaccesstoken"]
+            },
+            "description": "Renew access token using existing token. Returns new accessToken and mdAccessToken. Token expires after 5 hours."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Account Management",
+      "item": [
+        {
+          "name": "Get All Accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/accounts?locale=en",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["accounts"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Get all accounts for the authenticated user. Returns array of account objects with id, name, and status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Account State",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/accounts/{{ACCOUNT_ID}}/state?locale=en",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "state"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Get account balance and state information including netLiquidatingValue, cashBalance, openRealizedPl, and realizedPl."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Order Management",
+      "item": [
+        {
+          "name": "Place Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "instrument",
+                  "value": "MNQZ5",
+                  "type": "text",
+                  "description": "Contract symbol"
+                },
+                {
+                  "key": "qty",
+                  "value": "1",
+                  "type": "text",
+                  "description": "Quantity"
+                },
+                {
+                  "key": "side",
+                  "value": "Buy",
+                  "type": "text",
+                  "description": "Buy or Sell"
+                },
+                {
+                  "key": "type",
+                  "value": "Limit",
+                  "type": "text",
+                  "description": "Limit, Market, Stop, StopLimit"
+                },
+                {
+                  "key": "limitPrice",
+                  "value": "21000",
+                  "type": "text",
+                  "description": "Limit price (for Limit/StopLimit orders)"
+                },
+                {
+                  "key": "stopPrice",
+                  "value": "",
+                  "type": "text",
+                  "description": "Stop price (for Stop/StopLimit orders)",
+                  "disabled": true
+                },
+                {
+                  "key": "durationType",
+                  "value": "Day",
+                  "type": "text",
+                  "description": "Day, GTC, IOC, FOK"
+                },
+                {
+                  "key": "stopLoss",
+                  "value": "",
+                  "type": "text",
+                  "description": "Stop loss price (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "takeProfit",
+                  "value": "",
+                  "type": "text",
+                  "description": "Take profit price (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/accounts/{{ACCOUNT_ID}}/orders?locale=en",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "orders"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Place a new order with smart order type selection. System automatically determines Limit vs Stop based on current price vs target price."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/accounts/{{ACCOUNT_ID}}/orders?locale=en",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "orders"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Get all orders for the specified account. Returns array of Order objects with status, prices, and timestamps."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/accounts/{{ACCOUNT_ID}}/orders/:orderId?locale=en",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "orders", ":orderId"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "orderId",
+                  "value": "12345",
+                  "description": "Order ID"
+                }
+              ]
+            },
+            "description": "Get status of a specific order by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "id",
+                  "value": "12345",
+                  "type": "text",
+                  "description": "Order ID to update"
+                },
+                {
+                  "key": "limitPrice",
+                  "value": "21050",
+                  "type": "text",
+                  "description": "New limit price"
+                },
+                {
+                  "key": "qty",
+                  "value": "2",
+                  "type": "text",
+                  "description": "New quantity"
+                },
+                {
+                  "key": "durationType",
+                  "value": "Day",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/accounts/{{ACCOUNT_ID}}/orders/:orderId?locale=en",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "orders", ":orderId"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "orderId",
+                  "value": "12345"
+                }
+              ]
+            },
+            "description": "Update an existing order's price, quantity, or other parameters"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/accounts/{{ACCOUNT_ID}}/orders/:orderId?locale=en",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "orders", ":orderId"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "orderId",
+                  "value": "12345",
+                  "description": "Order ID to cancel"
+                }
+              ]
+            },
+            "description": "Cancel an order. Returns {s: 'ok'} if successful or {s: 'error', errmsg: 'Too late'} if order already filled."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Position Management",
+      "item": [
+        {
+          "name": "Get All Positions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/accounts/{{ACCOUNT_ID}}/positions?locale=en",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["accounts", "{{ACCOUNT_ID}}", "positions"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Get all active positions for the account. Returns array of Position objects with netPos, avgPrice, and unrealizedPl."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Market Data",
+      "item": [
+        {
+          "name": "Get Price Quotes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/quotes?locale=en&symbols=MNQZ5",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": ["quotes"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "symbols",
+                  "value": "MNQZ5",
+                  "description": "Comma-separated list of symbols"
+                }
+              ]
+            },
+            "description": "Get real-time price quotes for specified symbols. Returns bid, ask, last price, and volume."
+          },
+          "response": []
+        },
+        {
+          "name": "Contract Suggest (Symbol Discovery)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{TRADOVATE_REST_URL}}/contract/suggest?t=NQ",
+              "host": ["{{TRADOVATE_REST_URL}}"],
+              "path": ["contract", "suggest"],
+              "query": [
+                {
+                  "key": "t",
+                  "value": "NQ",
+                  "description": "Symbol prefix (NQ, ES, etc.)"
+                }
+              ]
+            },
+            "description": "Discover available contracts for a symbol. Returns array of contracts with id, name, and expiration info. Used to find current front-month contracts."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "WebSocket Connection",
+      "item": [
+        {
+          "name": "WebSocket Market Data Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{TRADOVATE_BASE_URL}}/",
+              "host": ["{{TRADOVATE_BASE_URL}}"],
+              "path": [""]
+            },
+            "description": "WebSocket connection information:\n\n**URL:** wss://md-demo.tradovateapi.com/v1/websocket\n\n**Protocol:** SockJS over WebSocket\n\n**Authentication:**\n1. Connect to WebSocket\n2. Send: authorize\\n1\\n\\n{mdAccessToken}\n3. Wait for authorization response\n\n**Subscribe to Real-time Data:**\n- Price updates: md/subscribeQuote\n- Chart data: md/getChart\n\n**Message Format:**\n{operation}\\n{id}\\n{query}\\n{body}\n\n**Heartbeat:** Send empty array [] every 2.4 seconds\n\nSee code examples in supabase/functions/fetch-candles/index.ts"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

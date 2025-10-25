@@ -1,0 +1,301 @@
+-- ========================================
+-- RPC FUNCTIONS WITH SECURITY DEFINER
+-- ========================================
+-- These functions need SECURITY DEFINER to write to orca schema
+
+-- NQ Functions
+CREATE OR REPLACE FUNCTION public.insert_nq_candles_5min(
+    p_symbol VARCHAR,
+    p_candle_time TIMESTAMPTZ,
+    p_open DECIMAL,
+    p_high DECIMAL,
+    p_low DECIMAL,
+    p_close DECIMAL,
+    p_volume BIGINT,
+    p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0,
+    p_up_ticks INTEGER DEFAULT 0,
+    p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, orca
+AS $$
+DECLARE
+    v_result JSON;
+BEGIN
+    INSERT INTO orca.nq_candles_5min (
+        symbol, candle_time, open, high, low, close, volume,
+        up_volume, down_volume, up_ticks, down_ticks
+    ) VALUES (
+        p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume,
+        p_up_volume, p_down_volume, p_up_ticks, p_down_ticks
+    )
+    ON CONFLICT (symbol, candle_time) 
+    DO UPDATE SET
+        open = EXCLUDED.open,
+        high = EXCLUDED.high,
+        low = EXCLUDED.low,
+        close = EXCLUDED.close,
+        volume = EXCLUDED.volume,
+        up_volume = EXCLUDED.up_volume,
+        down_volume = EXCLUDED.down_volume,
+        up_ticks = EXCLUDED.up_ticks,
+        down_ticks = EXCLUDED.down_ticks,
+        updated_at = NOW();
+    
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '5min');
+    RETURN v_result;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.insert_nq_candles_15min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.nq_candles_15min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '15min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_nq_candles_30min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.nq_candles_30min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '30min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_nq_candles_1hour(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.nq_candles_1hour (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '1hour');
+    RETURN v_result;
+END; $$;
+
+-- MNQ Functions
+CREATE OR REPLACE FUNCTION public.insert_mnq_candles_5min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.mnq_candles_5min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '5min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_mnq_candles_15min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.mnq_candles_15min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '15min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_mnq_candles_30min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.mnq_candles_30min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '30min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_mnq_candles_1hour(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.mnq_candles_1hour (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '1hour');
+    RETURN v_result;
+END; $$;
+
+-- ES Functions
+CREATE OR REPLACE FUNCTION public.insert_es_candles_5min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.es_candles_5min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '5min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_es_candles_15min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.es_candles_15min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '15min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_es_candles_30min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.es_candles_30min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '30min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_es_candles_1hour(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.es_candles_1hour (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '1hour');
+    RETURN v_result;
+END; $$;
+
+-- MES Functions
+CREATE OR REPLACE FUNCTION public.insert_mes_candles_5min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.mes_candles_5min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '5min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_mes_candles_15min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.mes_candles_15min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '15min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_mes_candles_30min(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.mes_candles_30min (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '30min');
+    RETURN v_result;
+END; $$;
+
+CREATE OR REPLACE FUNCTION public.insert_mes_candles_1hour(
+    p_symbol VARCHAR, p_candle_time TIMESTAMPTZ, p_open DECIMAL, p_high DECIMAL, 
+    p_low DECIMAL, p_close DECIMAL, p_volume BIGINT, p_up_volume BIGINT DEFAULT 0,
+    p_down_volume BIGINT DEFAULT 0, p_up_ticks INTEGER DEFAULT 0, p_down_ticks INTEGER DEFAULT 0
+) RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, orca AS $$
+DECLARE v_result JSON;
+BEGIN
+    INSERT INTO orca.mes_candles_1hour (symbol, candle_time, open, high, low, close, volume, up_volume, down_volume, up_ticks, down_ticks)
+    VALUES (p_symbol, p_candle_time, p_open, p_high, p_low, p_close, p_volume, p_up_volume, p_down_volume, p_up_ticks, p_down_ticks)
+    ON CONFLICT (symbol, candle_time) DO UPDATE SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, 
+    close = EXCLUDED.close, volume = EXCLUDED.volume, up_volume = EXCLUDED.up_volume, down_volume = EXCLUDED.down_volume, 
+    up_ticks = EXCLUDED.up_ticks, down_ticks = EXCLUDED.down_ticks, updated_at = NOW();
+    v_result := json_build_object('success', true, 'symbol', p_symbol, 'timeframe', '1hour');
+    RETURN v_result;
+END; $$;
+
+-- Grant permissions
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, service_role;
+
+-- Verify
+SELECT 'RPC Functions recreated with SECURITY DEFINER: ' || COUNT(*)::text as status
+FROM pg_proc 
+WHERE proname LIKE 'insert_%_candles_%';
