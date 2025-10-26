@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, UserPlus } from 'lucide-react';
+import SocialAuth from './SocialAuth';
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
@@ -80,6 +81,11 @@ const SignUp = () => {
               Sign in here
             </Link>
           </p>
+        </div>
+        
+        {/* Social Authentication */}
+        <div className="mt-8">
+          <SocialAuth />
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

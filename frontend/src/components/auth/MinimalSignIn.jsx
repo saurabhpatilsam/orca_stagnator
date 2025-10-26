@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
+import SocialAuth from './SocialAuth';
 
 const MinimalSignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  const { from } = location.state || { from: '/' };
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -108,6 +111,11 @@ const MinimalSignIn = () => {
               )}
             </button>
           </form>
+
+          {/* Social Authentication */}
+          <div className="mt-6 pt-6 border-t border-gray-900">
+            <SocialAuth />
+          </div>
 
           {/* Sign Up Link */}
           <div className="mt-6 pt-6 border-t border-gray-900">

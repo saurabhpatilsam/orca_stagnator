@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, LogIn, UserPlus, AlertCircle } from 'lucide-react';
+import SocialAuth from './SocialAuth';
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -47,6 +49,11 @@ const SignIn = () => {
               create a new account
             </Link>
           </p>
+        </div>
+        
+        {/* Social Authentication */}
+        <div className="mt-8">
+          <SocialAuth />
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
