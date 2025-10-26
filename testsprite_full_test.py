@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 
 # Deployment URLs
-FRONTEND_URL = "https://frontend-klskq1ywl-stagnator1s-projects.vercel.app"
+FRONTEND_URL = "https://frontend-52fqijjkh-stagnator1s-projects.vercel.app"
 BACKEND_URL = "https://orca-backend-api-production.up.railway.app"
 
 # Test configuration
