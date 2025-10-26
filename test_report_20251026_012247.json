@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-10-26T01:22:47.514268",
+  "frontend_url": "https://frontend-klskq1ywl-stagnator1s-projects.vercel.app",
+  "backend_url": "https://orca-backend-api-production.up.railway.app",
+  "summary": {
+    "total_tests": 36,
+    "passed": 24,
+    "failed": 12,
+    "pass_rate": 66.66666666666666,
+    "verdict": "FAIL - Needs Attention"
+  },
+  "errors": [
+    "Frontend responds with 200 OK: Status: 401",
+    "React app is loaded: React root element not found",
+    "Landing page (/): Status: 401",
+    "Sign in page (/signin): Status: 401",
+    "Sign up page (/signup): Status: 401",
+    "Dashboard (protected) (/dashboard): Status: 401",
+    "Hedging Algorithm page (/hedging-algo): Status: 401",
+    "Algorithm page (/algorithm): Status: 401",
+    "Backtesting page (/backtesting): Status: 401",
+    "Data upload page (/data): Status: 401",
+    "HFT optimization working (<1s target): Time: 4046ms",
+    "Supabase Auth service healthy: Status: 401"
+  ],
+  "warnings": [
+    "Positions API slower than target: 4046ms (target: <800ms)",
+    "Security: X-Content-Type-Options missing (nosniff expected)",
+    "Security: Content-Security-Policy missing (CSP header)"
+  ]
+}
