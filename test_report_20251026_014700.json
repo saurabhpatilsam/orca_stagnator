@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-10-26T01:47:00.217982",
+  "frontend_url": "https://orca-trading.surge.sh",
+  "backend_url": "https://orca-backend-api-production.up.railway.app",
+  "summary": {
+    "total_tests": 34,
+    "passed": 32,
+    "failed": 2,
+    "pass_rate": 94.11764705882352,
+    "verdict": "PASS - Production Ready"
+  },
+  "errors": [
+    "HFT optimization working (<1s target): Time: 4048ms",
+    "Supabase Auth service healthy: Status: 401"
+  ],
+  "warnings": [
+    "Positions API slower than target: 4048ms (target: <800ms)",
+    "Security: X-Frame-Options missing (SAMEORIGIN or DENY expected)",
+    "Security: X-Content-Type-Options missing (nosniff expected)",
+    "Security: Strict-Transport-Security missing (HTTPS enforcement)",
+    "Security: Content-Security-Policy missing (CSP header)"
+  ]
+}
