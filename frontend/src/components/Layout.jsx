@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Activity, 
@@ -9,20 +10,32 @@ import {
   User,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  BarChart3,
+  Link2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const Layout = ({ children, activeSection, setActiveSection }) => {
+const Layout = ({ children }) => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'algorithm', label: 'Algorithm', icon: Activity },
-    { id: 'backtesting', label: 'Backtesting', icon: TestTube },
-    { id: 'data', label: 'Data', icon: Database }
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { id: 'tradingview', label: 'TradingView Charts', icon: BarChart3, path: '/tradingview' },
+    { id: 'algorithm', label: 'Algorithm', icon: Activity, path: '/algorithm' },
+    { id: 'backtesting', label: 'Backtesting', icon: TestTube, path: '/backtesting' },
+    { id: 'data', label: 'Data', icon: Database, path: '/data' }
   ];
+  
+  const bottomMenuItems = [
+    { id: 'connections', label: 'Connections', icon: Link2, path: '/connections' }
+  ];
+
+  // Get active path for highlighting
+  const isActive = (path) => location.pathname === path;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
@@ -57,28 +70,56 @@ const Layout = ({ children, activeSection, setActiveSection }) => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4">
-            {menuItems.map((item) => (
-              <motion.button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-lg transition-all ${
-                  activeSection === item.id
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                    : 'hover:bg-gray-700'
-                }`}
-                whileHover={{ x: 5 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <item.icon size={20} />
-                {sidebarOpen && (
-                  <span className="flex-1 text-left">{item.label}</span>
-                )}
-                {sidebarOpen && activeSection === item.id && (
-                  <ChevronRight size={16} />
-                )}
-              </motion.button>
-            ))}
+          <nav className="flex-1 p-4 flex flex-col">
+            {/* Main Menu Items */}
+            <div className="flex-1">
+              {menuItems.map((item) => (
+                <motion.button
+                  key={item.id}
+                  onClick={() => navigate(item.path)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-lg transition-all ${
+                    isActive(item.path)
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                      : 'hover:bg-gray-700'
+                  }`}
+                  whileHover={{ x: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <item.icon size={20} />
+                  {sidebarOpen && (
+                    <span className="flex-1 text-left">{item.label}</span>
+                  )}
+                  {sidebarOpen && isActive(item.path) && (
+                    <ChevronRight size={16} />
+                  )}
+                </motion.button>
+              ))}
+            </div>
+            
+            {/* Bottom Menu Items - Connections */}
+            <div className="border-t border-gray-700 pt-4 mt-2">
+              {bottomMenuItems.map((item) => (
+                <motion.button
+                  key={item.id}
+                  onClick={() => navigate(item.path)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-lg transition-all ${
+                    isActive(item.path)
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                      : 'hover:bg-gray-700'
+                  }`}
+                  whileHover={{ x: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <item.icon size={20} />
+                  {sidebarOpen && (
+                    <span className="flex-1 text-left">{item.label}</span>
+                  )}
+                  {sidebarOpen && isActive(item.path) && (
+                    <ChevronRight size={16} />
+                  )}
+                </motion.button>
+              ))}
+            </div>
           </nav>
 
           {/* User Section */}
@@ -108,7 +149,7 @@ const Layout = ({ children, activeSection, setActiveSection }) => {
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         <motion.div
-          key={activeSection}
+          key={location.pathname}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}

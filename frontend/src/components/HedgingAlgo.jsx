@@ -67,7 +67,7 @@ const HedgingAlgo = () => {
   const fetchAccounts = async () => {
     setLoadingAccounts(true);
     try {
-      const response = await apiClient.get('/api/v1/trading/accounts');
+      const response = await apiClient.get('/api/accounts');
       if (response.accounts && response.accounts.length > 0) {
         const formattedAccounts = response.accounts.map(acc => ({
           value: acc.name || acc.account_name,

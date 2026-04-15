@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
+import TradingViewChart from './TradingViewChart';
+import ChartControls from './ChartControls';
+import useChartControls from '../hooks/useChartControls';
 
 const Backtesting = () => {
   const [backtestConfig, setBacktestConfig] = useState({
@@ -35,6 +38,13 @@ const Backtesting = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState(null);
   const [progress, setProgress] = useState(0);
+  
+  // Chart control state
+  const [chartWidgetRef, setChartWidgetRef] = useState(null);
+  const [showMarkers, setShowMarkers] = useState(true);
+  const [positionFilter, setPositionFilter] = useState('All');
+  const [resultFilter, setResultFilter] = useState('All');
+  const [isExportingChart, setIsExportingChart] = useState(false);
 
   const instruments = [
     { value: 'ESZ5', label: 'ES December 2025' },
@@ -93,6 +103,23 @@ const Backtesting = () => {
       };
 
       setResults(mockResults);
+      
+      // Generate a mock run ID and fetch trade markers
+      const runId = `backtest_${Date.now()}`;
+      setBacktestRunId(runId);
+      
+      // Try to fetch trade markers (this will fail with mock data, but structure is ready)
+      try {
+        const markersResponse = await backtestApiService.getTradeMarkers({ backtestRunId: runId });
+        const transformedMarkers = tradeMarkerService.transformTradesResponse(markersResponse);
+        setTradeMarkers(transformedMarkers.allMarkers);
+        setShowChart(true);
+      } catch (markerError) {
+        console.warn('Could not fetch trade markers (expected with mock data):', markerError);
+        // Set empty markers array for now
+        setTradeMarkers([]);
+      }
+      
       toast.success('Backtest completed successfully!');
     } catch (error) {
       toast.error('Failed to run backtest');
@@ -124,18 +151,171 @@ const Backtesting = () => {
     const trades = [];
     for (let i = 1; i <= 10; i++) {
       const isWin = Math.random() > 0.4;
+      const entryTime = Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000;
+      const exitTime = entryTime + Math.random() * 3600 * 1000; // Exit within 1 hour
       trades.push({
         id: i,
-        date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        date: new Date(entryTime).toLocaleDateString(),
         side: Math.random() > 0.5 ? 'LONG' : 'SHORT',
         entry: 5900 + Math.random() * 20,
         exit: 5900 + Math.random() * 20 + (isWin ? 5 : -5),
         pnl: isWin ? Math.random() * 500 : -Math.random() * 250,
-        status: isWin ? 'WIN' : 'LOSS'
+        status: isWin ? 'WIN' : 'LOSS',
+        entryTime: Math.floor(entryTime / 1000), // Unix seconds
+        exitTime: Math.floor(exitTime / 1000)
       });
     }
     return trades;
   };
+
+  // Transform trades to TradingView marker format
+  const transformTradesToMarkers = (trades) => {
+    if (!trades || trades.length === 0) return [];
+    
+    return trades.map(trade => ({
+      id: trade.id,
+      position_type: trade.side === 'LONG' ? 'Long' : 'Short',
+      result: trade.status === 'WIN' ? 'Filled' : 'Lost',
+      color: trade.status === 'WIN' ? '#10b981' : '#ef4444',
+      pnl: trade.pnl,
+      entryCoordinates: {
+        time: trade.entryTime,
+        price: trade.entry
+      },
+      exitCoordinates: {
+        time: trade.exitTime,
+        price: trade.exit
+      }
+    }));
+  };
+
+  // Chart control handlers
+  const handleToggleMarkers = () => {
+    setShowMarkers(prev => !prev);
+  };
+
+  const handlePositionFilterChange = (value) => {
+    setPositionFilter(value);
+  };
+
+  const handleResultFilterChange = (value) => {
+    setResultFilter(value);
+  };
+
+  const handleZoomToTrades = () => {
+    if (!chartWidgetRef) {
+      toast.error('Chart is not ready');
+      return;
+    }
+    
+    try {
+      const timeRange = chartWidgetRef.getVisibleMarkerTimeRange?.();
+      if (!timeRange || !timeRange.hasMarkers) {
+        toast.error('No trade markers to zoom to');
+        return;
+      }
+      
+      const padding = (timeRange.to - timeRange.from) * 0.1;
+      chartWidgetRef.activeChart?.().setVisibleRange({
+        from: timeRange.from - padding,
+        to: timeRange.to + padding
+      });
+      toast.success('Zoomed to trade markers');
+    } catch (error) {
+      console.error('Zoom error:', error);
+      toast.error('Failed to zoom to trades');
+    }
+  };
+
+  const handleResetZoom = () => {
+    if (!chartWidgetRef) {
+      toast.error('Chart is not ready');
+      return;
+    }
+    
+    try {
+      chartWidgetRef.activeChart?.().resetData();
+      toast.success('Chart zoom reset');
+    } catch (error) {
+      console.error('Reset zoom error:', error);
+      toast.error('Failed to reset zoom');
+    }
+  };
+
+  const handleExportChart = async () => {
+    if (!chartWidgetRef) {
+      toast.error('Chart is not ready');
+      return;
+    }
+    
+    setIsExportingChart(true);
+    try {
+      if (!chartWidgetRef.takeScreenshot) {
+        toast.error('Export feature not available');
+        return;
+      }
+      
+      const canvas = await chartWidgetRef.takeScreenshot();
+      if (!canvas) {
+        toast.error('Failed to generate screenshot');
+        return;
+      }
+      
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error('Failed to create image');
+          return;
+        }
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `backtest_chart_${new Date().toISOString().slice(0, 10)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success('Chart exported successfully');
+      }, 'image/png');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export chart');
+    } finally {
+      setIsExportingChart(false);
+    }
+  };
+
+  // Calculate trade stats for chart controls
+  const tradeStats = useMemo(() => {
+    if (!results?.trades) {
+      return { total: 0, filled: 0, lost: 0, long: 0, short: 0, totalPnL: 0 };
+    }
+    
+    const markers = transformTradesToMarkers(results.trades);
+    let filtered = markers;
+    
+    if (positionFilter !== 'All') {
+      filtered = filtered.filter(m => m.position_type === positionFilter);
+    }
+    if (resultFilter !== 'All') {
+      filtered = filtered.filter(m => m.result === resultFilter);
+    }
+    
+    return {
+      total: filtered.length,
+      filled: filtered.filter(m => m.result === 'Filled').length,
+      lost: filtered.filter(m => m.result === 'Lost').length,
+      long: filtered.filter(m => m.position_type === 'Long').length,
+      short: filtered.filter(m => m.position_type === 'Short').length,
+      totalPnL: filtered.reduce((sum, m) => sum + m.pnl, 0)
+    };
+  }, [results?.trades, positionFilter, resultFilter]);
+
+  // Transform trades to markers
+  const tradeMarkers = useMemo(() => {
+    if (!results?.trades) return [];
+    return transformTradesToMarkers(results.trades);
+  }, [results?.trades]);
 
   const downloadResults = () => {
     if (!results) return;
@@ -363,6 +543,21 @@ const Backtesting = () => {
             </button>
           </div>
 
+          {/* TradingView Chart */}
+          <div className="mb-6 bg-gray-800 rounded-lg p-4 border border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <BarChart3 className="text-purple-500" />
+              Price Chart
+            </h3>
+            <TradingViewChart
+              symbol={backtestConfig.instrument.replace('Z5', '')} // Remove Z5 suffix for symbol
+              interval="10T"
+              height={500}
+              tradeMarkers={[]} // Add markers when available
+              showMarkers={true}
+            />
+          </div>
+
           {/* Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
@@ -500,6 +695,53 @@ const Backtesting = () => {
               </table>
             </div>
           </div>
+
+          {/* Trade Visualization Chart */}
+          {tradeMarkers.length > 0 && (
+            <div className="mt-6">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold flex items-center gap-2">
+                  <BarChart3 className="text-purple-500" />
+                  Trade Visualization
+                </h3>
+                <p className="text-sm text-gray-400 mt-1">
+                  Interactive chart showing trade entries, exits, and P&L markers
+                </p>
+              </div>
+
+              {/* Chart Controls */}
+              <ChartControls
+                showMarkers={showMarkers}
+                onToggleMarkers={handleToggleMarkers}
+                positionFilter={positionFilter}
+                onPositionFilterChange={handlePositionFilterChange}
+                resultFilter={resultFilter}
+                onResultFilterChange={handleResultFilterChange}
+                onZoomToTrades={handleZoomToTrades}
+                onResetZoom={handleResetZoom}
+                onExportChart={handleExportChart}
+                isExporting={isExportingChart}
+                tradeStats={tradeStats}
+              />
+
+              {/* TradingView Chart */}
+              <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+                <TradingViewChart
+                  symbol={backtestConfig.instrument}
+                  interval="5T"
+                  containerId={`backtest_chart_${backtestConfig.instrument}`}
+                  tradeMarkers={tradeMarkers}
+                  showMarkers={showMarkers}
+                  markerFilters={{
+                    positionType: positionFilter,
+                    resultType: resultFilter
+                  }}
+                  theme="dark"
+                  onChartReady={setChartWidgetRef}
+                />
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
     </div>

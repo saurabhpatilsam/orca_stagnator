@@ -7,9 +7,9 @@ import {
   DollarSign,
   Clock,
   RefreshCw,
-  AlertCircle
-} from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { apiClient } from '../config/api';
+import { priceWebSocket } from '../services/priceWebSocket';
 
 const PriceStreaming = ({ instruments }) => {
   const [prices, setPrices] = useState({});
@@ -48,55 +48,48 @@ const PriceStreaming = ({ instruments }) => {
   const connectToPriceStream = async () => {
     try {
       setLoading(true);
-      
-      // Connect to backend WebSocket or polling endpoint
-      const streamUrl = import.meta.env.VITE_API_URL || 'https://orca-backend-api-production.up.railway.app';
-      
-      // For now, simulate with polling
-      const pollPrices = async () => {
-        try {
-          const response = await fetch(`${streamUrl}/api/prices/live`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('orca-auth-token')}`
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            setMarketStatus(data.market_status || 'closed');
-            
-            if (data.prices) {
-              updatePrices(data.prices);
-            }
-            setConnected(true);
-          }
-        } catch (error) {
-          console.error('Price fetch error:', error);
-          // Do NOT simulate prices - just show connection error
-          setConnected(false);
-        }
-      };
-
-      // Poll every second for real-time feel
-      pollPrices();
-      const interval = setInterval(pollPrices, 1000);
-      
-      // Store interval ID for cleanup
-      window.priceStreamInterval = interval;
-      
-      setLoading(false);
+      await priceWebSocket.connect();
       setConnected(true);
+      setLoading(false);
+
+      // Handle raw price messages from Redis WebSocket
+      window.priceStreamUnsubscribe = priceWebSocket.addMessageHandler((symbol, data) => {
+        setPrices(prevPrices => {
+          // Attempt to map the incoming data or fallback to defaults
+          const current = prevPrices[symbol] || {};
+          const price = data.price || data.last;
+          
+          return {
+            ...prevPrices,
+            [symbol]: {
+              ...current,
+              bid: data.bid || price,
+              ask: data.ask || price,
+              last: price,
+              change: data.change || 0,
+              changePercent: data.changePercent || 0,
+              volume: data.volume || 0,
+              high: data.high || price,
+              low: data.low || price,
+              open: data.open || price,
+              timestamp: data.time || new Date()
+            }
+          };
+        });
+        setLastUpdate(new Date());
+      });
     } catch (error) {
-      console.error('Failed to connect to price stream:', error);
+      console.error('Failed to connect to Redis price stream:', error);
       setLoading(false);
       setConnected(false);
     }
   };
 
   const disconnectPriceStream = () => {
-    if (window.priceStreamInterval) {
-      clearInterval(window.priceStreamInterval);
+    if (window.priceStreamUnsubscribe) {
+      window.priceStreamUnsubscribe();
     }
+    priceWebSocket.disconnect();
     setConnected(false);
   };
 
@@ -204,7 +197,7 @@ const PriceStreaming = ({ instruments }) => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-white">Live Market Prices</h2>
-            <p className="text-gray-500 text-sm mt-1">Real-time streaming from Tradovate</p>
+            <p className="text-gray-500 text-sm mt-1">Real-time streaming from Redis</p>
           </div>
           <div className="flex items-center space-x-4">
             {/* Connection Status */}

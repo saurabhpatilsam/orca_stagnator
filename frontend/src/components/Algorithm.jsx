@@ -45,13 +45,11 @@ const Algorithm = ({ onStatusChange }) => {
     try {
       setLoadingData(true);
       
-      // Fetch instruments
-      const instrumentsRes = await fetch('http://localhost:8000/api/instruments');
-      const instrumentsData = await instrumentsRes.json();
+      // Fetch instruments from Supabase via API
+      const instrumentsData = await apiClient.get('/api/instruments');
       
-      // Fetch accounts
-      const accountsRes = await fetch('http://localhost:8000/api/accounts');
-      const accountsData = await accountsRes.json();
+      // Fetch accounts from Supabase via API
+      const accountsData = await apiClient.get('/api/accounts');
       
       if (instrumentsData.instruments) {
         setInstruments(instrumentsData.instruments.map(inst => ({
